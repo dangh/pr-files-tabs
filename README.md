@@ -65,6 +65,16 @@ v0.3.0 (diffs loaded on demand as they neared the screen).
 
 Without the extension GitHub needs 42 sequential requests, 30-45 s, for the whole PR.
 
+**Larger PRs** (new page, opening on Source, logged in; "GitHub alone" is this build with every
+experiment off). GitHub switches all three to its large-PR list by itself, so without the
+extension diffs only load as you scroll to them.
+
+| PR | Files (Source) | GitHub alone after 90 s | Source loaded | Whole PR loaded | Requests on 5 tab switches |
+|---|---|---|---|---|---|
+| [microsoft/vscode#151512](https://github.com/microsoft/vscode/pull/151512/changes) | 898 (617) | 22 files | 36-38 s | 49-53 s | 5-6 → **0** |
+| [kubernetes/kubernetes#102196](https://github.com/kubernetes/kubernetes/pull/102196/changes) | 336 (286) | 8 files | 11-12 s | 12 s | 3 → **0** |
+| [vercel/next.js#78559](https://github.com/vercel/next.js/pull/78559/changes) | 770 (60) | 9 files | 12-13 s | 44-51 s | 5 → **0** |
+
 **Classic page** (logged out, cold browser cache)
 
 | | Before | Now |
@@ -76,8 +86,8 @@ Without the extension GitHub needs 42 sequential requests, 30-45 s, for the whol
 **Opening on All** (Parallel diff loading, measured 2026-10-16): every diff loaded in 11-15 s
 instead of 35-47 s, about 5 requests in flight instead of 1.
 
-Not measured yet: main-thread and memory cost, other PRs, and arriving at a PR from elsewhere on
-GitHub without a reload.
+Not measured yet: main-thread and memory cost, and arriving at a PR from elsewhere on GitHub
+without a reload.
 
 ## Notes
 

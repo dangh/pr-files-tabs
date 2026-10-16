@@ -100,8 +100,11 @@ file in the background; switching tabs then makes no requests.
    files; the list, tree and "viewed" counter then show just those. On All nothing is swapped
    (unless a tab was swapped in before).
 3. **Ask the loader for the whole tab.** `progressiveDiffsActions.loadManyPriority(digests)`
-   jumps GitHub's queue and fetches all the given files **in one request**. Batches are
-   capped at 100 files and sent one at a time (the loader serves these calls last-in
+   jumps GitHub's queue and fetches all the given files **in one request**. That request
+   carries every path in its URL (encoded twice), so batches are capped at 100 files **and**
+   about 6,000 characters of paths: on microsoft/vscode#151512 (deep paths) 92-100-file
+   batches failed with 414 URI Too Long, and files from a failed request never load. Batches
+   are sent one at a time (the loader serves these calls last-in
    first-out, so queueing several would scramble the order); each waits until the store marks
    its files loaded (`entriesMap[digest].isLoaded`), or 20 s, since a failed request leaves
    files "in flight" in GitHub's loader for good. Whatever is still missing is asked for again

@@ -133,8 +133,32 @@
     loadFiles(Object.values(next).map((summary) => summary.pathDigest), experiments(config).background);
   }
 
-  // Files per loadManyPriority() call; GitHub fetches each call's files in one request.
+  // GitHub fetches each loadManyPriority() call's files in one request, with every path in its
+  // URL (encoded twice). Long paths made 100-file batches fail with 414 URI Too Long, and files
+  // from a failed request never load, so batches are cut by URL length as well as count.
   const LOAD_BATCH = 100;
+  const LOAD_URL_BUDGET = 6000;
+
+  function batches(target, digests) {
+    let out = [];
+    let batch = [];
+    let length = 0;
+    for (let digest of digests) {
+      let path = target.getState().entriesMap?.[digest]?.path || '';
+      let cost = encodeURIComponent(encodeURIComponent(path)).length + 3;
+      if (batch.length > 0 && (batch.length >= LOAD_BATCH || length + cost > LOAD_URL_BUDGET)) {
+        out.push(batch);
+        batch = [];
+        length = 0;
+      }
+      batch.push(digest);
+      length += cost;
+    }
+    if (batch.length > 0) {
+      out.push(batch);
+    }
+    return out;
+  }
   let loadRun = 0;
 
   function isLoaded(target, digest) {
@@ -178,11 +202,11 @@
   // One batch at a time: the loader serves loadManyPriority() calls last-in first-out, so
   // queueing several at once would scramble the order.
   async function loadInBatches(target, digests, run) {
-    for (let i = 0; i < digests.length; i += LOAD_BATCH) {
-      let batch = digests.slice(i, i + LOAD_BATCH).filter((d) => !isLoaded(target, d));
+    for (let batch of batches(target, digests.filter((d) => !isLoaded(target, d)))) {
       if (run !== loadRun || store !== target) {
         return;
       }
+      batch = batch.filter((d) => !isLoaded(target, d));
       if (batch.length > 0) {
         await loadAndWait(target, batch);
       }
