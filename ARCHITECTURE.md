@@ -160,13 +160,19 @@ Same experiment and condition as hack 1 (PR opens on a tab other than All).
 
 1. `page.js` rewrites the chunk request's `bytes` and `lines` to values over GitHub's page
    budget. The server then sends **every remaining file in one response as a placeholder**
-   (~1.8 MB instead of ~3.7 MB + a second chunk, and no diffs to render), and the response's
-   loaders get a `data-ghpt-deferred` tag.
-2. `content.js` watches tagged loaders with an `IntersectionObserver` (1500 px margin) and clicks
-   their "Load diff" button when they come near the screen. Hidden files never intersect, so
-   they never load; switching tabs shows them and they load as you scroll.
-3. Placeholders with a reason text (e.g. "This file was deleted.") are left for the user, as
+   (~1.8 MB instead of ~3.7 MB + a second chunk, and no diffs to render).
+2. Before handing the response to GitHub, `page.js` parses it in a `<template>` (inert: nothing
+   runs or upgrades), tags every loader `data-ghpt-deferred`, and sets `src` on the first 6
+   in the open tab so they start loading the moment GitHub inserts the chunk.
+3. `content.js` watches the other tagged loaders with an `IntersectionObserver` (1500 px
+   margin) and sets their `src` when they come near the screen. Hidden files never intersect,
+   so they never load; switching tabs shows them and they load as you scroll.
+4. Placeholders with a reason text (e.g. "This file was deleted.") are left for the user, as
    GitHub intends.
+
+Loading goes through `src`, not GitHub's "Load diff" button: the button's handler also focuses
+the loaded diff, which scrolled the page to every file that loaded and pulled the next ones
+into range.
 
 Trade-off: over budget, GitHub drops the "Large diffs are not rendered by default" reason, so
 a genuinely large diff in the open tab loads when you scroll to it instead of waiting for a

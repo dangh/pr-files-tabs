@@ -233,9 +233,13 @@
   // data-ghpt-deferred); load them as they come near the screen. Hidden files never do.
   let nearScreen = new IntersectionObserver(function (entries) {
     for (let entry of entries) {
-      if (entry.isIntersecting) {
+      // Setting src makes the include-fragment load itself. Clicking "Load diff" instead would
+      // also focus the diff, scrolling the page to every file that loads.
+      let url = entry.target.dataset.fragmentUrl;
+      // page.js already gave the first few a src; setting it again would refetch.
+      if (entry.isIntersecting && url && !entry.target.hasAttribute('src')) {
         nearScreen.unobserve(entry.target);
-        entry.target.querySelector('.js-diff-load')?.click();
+        entry.target.setAttribute('src', url);
       }
     }
   }, { rootMargin: '1500px 0px' });
@@ -428,8 +432,10 @@
       return;
     }
     bar.classList.remove('ghpt-inline');
-    if (firstDiff && bar.nextElementSibling !== firstDiff) {
-      firstDiff.parentElement.insertBefore(bar, firstDiff);
+    // On the classic page the diff sits in a copilot-diff-entry that gets hidden with it.
+    let before = firstDiff?.closest('copilot-diff-entry') || firstDiff;
+    if (before && bar.nextElementSibling !== before) {
+      before.parentElement.insertBefore(bar, before);
     }
   }
 

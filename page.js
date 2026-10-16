@@ -171,6 +171,37 @@
     return /^\/[^/]+\/[^/]+\/diffs$/.test(url.pathname) && url.searchParams.has('start_entry');
   }
 
+  // The first files of the open tab start loading as soon as the chunk is inserted, without
+  // waiting for content.js to see them.
+  const EAGER = 6;
+
+  // Tags the placeholders so content.js loads only these, not GitHub's own "Load diff" cases,
+  // and gives the first few in the open tab a src so they load right away. A template parses
+  // the HTML without running or upgrading anything.
+  function markDeferred(html) {
+    let config = cachedConfig();
+    let key = GHPT.initialKey(config, GHPT.prKey(location.pathname));
+    let compiled = GHPT.compileConfig(config);
+    let template = document.createElement('template');
+    template.innerHTML = html;
+    let eager = 0;
+    for (let file of template.content.querySelectorAll('.file[data-tagsearch-path]')) {
+      let loader = file.querySelector('include-fragment.js-diff-entry-loader[data-fragment-url]');
+      if (!loader) {
+        continue;
+      }
+      loader.setAttribute('data-ghpt-deferred', '');
+      // A reason (e.g. "This file was deleted.") means GitHub itself wants a click.
+      let reason = file.querySelector('[id^="hidden-diff-reason"]')?.textContent.trim();
+      let inTab = GHPT.classify(compiled, file.dataset.tagsearchPath).has(Number(key));
+      if (eager < EAGER && inTab && !reason) {
+        loader.setAttribute('src', loader.dataset.fragmentUrl);
+        eager += 1;
+      }
+    }
+    return template.innerHTML;
+  }
+
   function deferChunk(fetchWith, input, args, url) {
     for (let [key, value] of Object.entries(OVER_BUDGET)) {
       url.searchParams.set(key, value);
@@ -180,9 +211,7 @@
       if (!response.ok) {
         return response;
       }
-      // Tag the placeholders so content.js loads only these, not GitHub's own "Load diff"
-      // cases on other pages.
-      let html = (await response.text()).replace(/<include-fragment(?=[^>]*\bjs-diff-entry-loader\b)/g, '<include-fragment data-ghpt-deferred');
+      let html = markDeferred(await response.text());
       let { status, statusText, headers } = response;
       return new Response(html, { status, statusText, headers });
     });
