@@ -396,11 +396,28 @@
     fit(bar);
   }
 
+  // The classic page's sticky toolbar row ("Changes from all commits", File filter, ...).
+  function classicRow() {
+    return document.querySelector('.pr-toolbar .diffbar .d-flex.flex-items-center.flex-wrap');
+  }
+
   // Collapse the buttons into a dropdown when the toolbar row can't hold them all.
   function fit(bar) {
     bar.classList.remove('ghpt-compact');
+    if (!bar.classList.contains('ghpt-inline')) {
+      return;
+    }
+    let row = classicRow();
+    if (row && bar.parentElement === row) {
+      // The classic row wraps instead of overflowing; compact if the bar wrapped to a new line.
+      let first = [...row.children].find((c) => c.offsetWidth > 0);
+      if (first && bar.offsetTop > first.offsetTop + first.offsetHeight / 2) {
+        bar.classList.add('ghpt-compact');
+      }
+      return;
+    }
     let toolbar = bar.closest('section');
-    if (!bar.classList.contains('ghpt-inline') || !toolbar) {
+    if (!toolbar) {
       return;
     }
     let used = 0;
@@ -414,9 +431,19 @@
     }
   }
 
-  // Prefer the sticky toolbar row (left of the viewed counter and Submit review).
+  // Prefer the sticky toolbar row: on the new page left of the viewed counter and Submit review,
+  // on the classic page at the end of the row with "Changes from all commits".
   // Fall back to just above the first diff on pages without that toolbar.
   function placeBar(bar, firstDiff) {
+    let row = classicRow();
+    if (row) {
+      bar.classList.add('ghpt-inline');
+      // Last item of the row, pushed to the right by the bar's auto margin.
+      if (bar.parentElement !== row || row.lastElementChild !== bar) {
+        row.append(bar);
+      }
+      return;
+    }
     let review = [...document.querySelectorAll('button')].find((b) => /Submit review/.test(b.textContent));
     let toolbar = review?.closest('section');
     let anchor = review;

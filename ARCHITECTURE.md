@@ -154,6 +154,15 @@ out, or with the new page's preview turned off). It works differently:
   URL is `/owner/repo/diffs/<file index>?name=<head sha>&base_sha=...&sha1=...&sha2=...`. Its
   `.js-diff-load` button makes GitHub load it.
 
+### Tab bar placement
+
+New page: first child of the right-hand group in the sticky toolbar (left of the viewed counter
+and Submit review). Classic page: last child of the sticky toolbar row
+(`.pr-toolbar .diffbar .d-flex.flex-wrap`, the row with "Changes from all commits"), pushed
+right by the bar's auto margin. That row wraps rather than overflows, so `fit()` collapses the
+bar to a dropdown when it ends up on a second line. Without either toolbar the bar goes above
+the first diff.
+
 ### Hack 3: classic on demand (page.js + content.js)
 
 Same experiment and condition as hack 1 (PR opens on a tab other than All).
