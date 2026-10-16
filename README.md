@@ -34,7 +34,8 @@ Both are on by default and can be turned off in the options page.
   no reload. Trade-offs: Find on Page only sees diffs near the screen, and GitHub's own
   file tree and "viewed" counter show the open tab's files. It reaches GitHub's store
   through React internals; if those change it does nothing and tabs fall back to hiding
-  files with CSS.
+  files with CSS. On the classic page it asks GitHub to send the diffs as "Load diff"
+  placeholders instead, and loads the open tab's as they come near the screen.
 - **Parallel diff loading**. GitHub fetches diff contents 4 files per
   request, one request at a time, so a 160-file PR takes 30 s or more to fill in. A page
   script (`prefetch.js`) wraps `fetch`, loads the same batches with about 5 requests in
@@ -72,6 +73,16 @@ Source 0.35 s, back to Metadata 0.33 s. 6 diff requests for the whole session.
 |---|---|---|
 | All 167 files loaded | 35-47 s | 11-15 s |
 | Requests in flight | 1 | ~5 |
+
+**Classic page** (`/pull/N/files`, logged out), opening on Tests:
+
+| | Before | After |
+|---|---|---|
+| First 3 / first 10 Tests diffs shown | 1.8-2.6 s | 1.5-2.8 s / 1.7-3.6 s |
+| Page elements | 37,390 | ~20,200 |
+| Diff table rows rendered | 2,610 | ~370 |
+
+On the classic page diffs show up about as fast; the gain is a page about half the size.
 
 Diff contents were identical with the experiment on and off. Not measured yet: main-thread
 and memory cost, other PRs, and arriving at a PR from elsewhere on GitHub without a reload.

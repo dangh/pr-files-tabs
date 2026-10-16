@@ -96,33 +96,56 @@
     return parts.join('/');
   }
 
-  // Filters the left file tree. Files resolve through the diff anchor they link to
-  // (falling back to the path built from labels); folders stay only if they hold a visible file.
+  // The classic page's tree rows are li#file-tree-item-diff-<digest>; its folders have no
+  // aria-expanded.
+  const CLASSIC_TREE_FILE = 'file-tree-item-diff-';
+
+  function isTreeFolder(item) {
+    return item.hasAttribute('aria-expanded') || item.dataset.treeEntryType === 'directory';
+  }
+
+  // Files resolve through their diff id (classic tree rows, or the diff anchor they link to),
+  // falling back to the path built from labels.
+  function heldForTreeFile(item, bucketByPath, bucketByDiffId) {
+    if (item.id.startsWith(CLASSIC_TREE_FILE)) {
+      return bucketByDiffId.get('diff-' + item.id.slice(CLASSIC_TREE_FILE.length));
+    }
+    let href = item.querySelector('a[href*="#diff-"]')?.getAttribute('href') || '';
+    return bucketByDiffId.get(href.slice(href.indexOf('#') + 1)) || bucketByPath.get(treePathOf(item));
+  }
+
+  function showTreeItem(item, visible) {
+    if (visible) {
+      delete item.dataset.ghptHidden;
+    } else {
+      item.dataset.ghptHidden = '1';
+    }
+  }
+
+  // Filters the left file tree. Folders stay only if they hold a visible file.
   function filterTree(bucketByPath, bucketByDiffId) {
-    let items = document.querySelectorAll('[role="tree"] li[role="treeitem"]');
+    let items = [...document.querySelectorAll('[role="tree"] li[role="treeitem"]')];
     let activePaths = [];
     for (let [path, held] of bucketByPath) {
       if (active === 'all' || held.has(Number(active))) {
         activePaths.push(path);
       }
     }
-    for (let item of items) {
-      let isFolder = item.hasAttribute('aria-expanded');
-      let path = treePathOf(item);
+    // Files first, so folders can check what they still show.
+    for (let item of items.filter((i) => !isTreeFolder(i))) {
+      let held = heldForTreeFile(item, bucketByPath, bucketByDiffId);
+      showTreeItem(item, active === 'all' || Boolean(held?.has(Number(active))));
+    }
+    for (let item of items.filter(isTreeFolder)) {
       let visible = true;
-      if (active !== 'all' && isFolder) {
-        visible = activePaths.some((p) => p.startsWith(path + '/'));
+      if (active !== 'all') {
+        let files = [...item.querySelectorAll('li[role="treeitem"]')].filter((i) => !isTreeFolder(i));
+        // Collapsed folders on the new page don't render their rows; fall back to paths.
+        visible = files.length > 0
+          ? files.some((f) => !f.dataset.ghptHidden)
+          : activePaths.some((p) => p.startsWith(treePathOf(item) + '/'));
       }
-      if (active !== 'all' && !isFolder) {
-        let href = item.querySelector('a[href*="#diff-"]')?.getAttribute('href') || '';
-        let held = bucketByDiffId.get(href.slice(href.indexOf('#') + 1)) || bucketByPath.get(path);
-        visible = Boolean(held?.has(Number(active)));
-      }
-      if (visible) {
-        delete item.dataset.ghptHidden;
-      } else {
-        item.dataset.ghptHidden = '1';
-      }
+      showTreeItem(item, visible);
     }
   }
 
@@ -134,7 +157,33 @@
   // suffix), so every file is known before the lazy diff list renders.
   let summaryCache = new WeakMap();
 
+  // The classic page embeds no file list, but its file tree lists every file up front.
+  function readClassicTree() {
+    let first = document.querySelector('li[id^="' + CLASSIC_TREE_FILE + '"][data-tree-entry-type="file"]');
+    if (!first) {
+      return null;
+    }
+    if (!summaryCache.has(first)) {
+      let map = new Map();
+      try {
+        for (let item of document.querySelectorAll('li[id^="' + CLASSIC_TREE_FILE + '"][data-tree-entry-type="file"]')) {
+          let path = JSON.parse(item.dataset.hydroClickPayload).payload.data.path;
+          map.set(item.id.slice(CLASSIC_TREE_FILE.length), path);
+        }
+      } catch (e) {
+        // markup changed; fall back to the rendered diffs
+        map = null;
+      }
+      summaryCache.set(first, map);
+    }
+    return summaryCache.get(first);
+  }
+
   function readSummary() {
+    let classic = readClassicTree();
+    if (classic) {
+      return classic;
+    }
     for (let script of document.querySelectorAll('script[data-target="react-app.embeddedData"]')) {
       if (!summaryCache.has(script)) {
         let map = null;
@@ -162,8 +211,9 @@
     if (active !== 'all') {
       for (let file of files) {
         if (!heldByDiffId.get('diff-' + file.digest).has(Number(active))) {
-          rules.push('div:has(> #diff-' + file.digest + ') { display: none !important; }');
-          rules.push('li[role="treeitem"][id=' + JSON.stringify(file.path) + '] { display: none !important; }');
+          // New page: div > #diff-x. Classic page: copilot-diff-entry > #diff-x.
+          rules.push('div:has(> #diff-' + file.digest + '), copilot-diff-entry:has(> #diff-' + file.digest + ') { display: none !important; }');
+          rules.push('li[role="treeitem"][id=' + JSON.stringify(file.path) + '], #' + CLASSIC_TREE_FILE + file.digest + ' { display: none !important; }');
         }
       }
     }
@@ -176,6 +226,28 @@
     }
     if (style.textContent !== css) {
       style.textContent = css;
+    }
+  }
+
+  // Classic page: page.js has GitHub send the diffs as "Load diff" placeholders (tagged
+  // data-ghpt-deferred); load them as they come near the screen. Hidden files never do.
+  let nearScreen = new IntersectionObserver(function (entries) {
+    for (let entry of entries) {
+      if (entry.isIntersecting) {
+        nearScreen.unobserve(entry.target);
+        entry.target.querySelector('.js-diff-load')?.click();
+      }
+    }
+  }, { rootMargin: '1500px 0px' });
+
+  function watchDeferred() {
+    for (let loader of document.querySelectorAll('include-fragment[data-ghpt-deferred]:not([data-ghpt-watched])')) {
+      loader.dataset.ghptWatched = '1';
+      // A reason (e.g. "This file was deleted.") means GitHub itself wants a click; leave it.
+      let reason = loader.closest('.js-diff-load-container')?.querySelector('[id^="hidden-diff-reason"]');
+      if (!reason?.textContent.trim()) {
+        nearScreen.observe(loader);
+      }
     }
   }
 
@@ -258,6 +330,7 @@
     for (let slot of hide) {
       slot.dataset.ghptHidden = '1';
     }
+    watchDeferred();
     if (summary) {
       writeFilterStyle(files, bucketByDiffId);
     } else {

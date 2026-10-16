@@ -1,9 +1,10 @@
 # Architecture
 
-PR Files Tabs adds tabs to GitHub's pull request **Files changed** page
-(`/owner/repo/pull/N/changes`). Hiding files is simple; making GitHub *not load* the hidden
-files takes several hacks against GitHub's front-end internals. This document explains
-both, and what to check when GitHub changes.
+PR Files Tabs adds tabs to GitHub's pull request **Files changed** page, both the new one
+(`/owner/repo/pull/N/changes`) and the classic one (`/owner/repo/pull/N/files`). Hiding
+files is simple; making GitHub *not load* the hidden files takes several hacks against
+GitHub's front-end internals. This document explains both, and what to check when GitHub
+changes.
 
 ## Files
 
@@ -12,7 +13,7 @@ both, and what to check when GitHub changes.
 | `shared.js` | all | - | Config defaults, pattern matching, `prKey`, `initialKey` (which tab a PR opens on) |
 | `content.js` | isolated | `document_idle` | Tab bar, counts, hiding files with CSS, publishing state for the page scripts |
 | `content.css` | isolated | - | Tab bar styles, `[data-ghpt-hidden]` |
-| `page.js` | MAIN | `document_start` | Load diffs on demand: virtualized list + swapping GitHub's file list |
+| `page.js` | MAIN | `document_start` | Load diffs on demand: virtualized list + swapping GitHub's file list; classic chunk budget |
 | `prefetch.js` | MAIN | `document_start` | Parallel diff loading |
 | `options.*` | extension page | - | Settings |
 
@@ -70,8 +71,9 @@ Found by reading GitHub's bundles (the chunk that defines `startQueue`,
 Each file in the active tab is classified with `GHPT.classify()`. Files outside it are hidden
 two ways:
 
-1. A `<style id="ghpt-filter">` with `div:has(> #diff-<digest>)` and tree-item rules, built
-   from the embedded file list, so files are hidden the moment GitHub renders them.
+1. A `<style id="ghpt-filter">` with `div:has(> #diff-<digest>)` (classic:
+   `copilot-diff-entry:has(> ...)`) and tree-item rules, built from the embedded file list
+   (classic: the file tree), so files are hidden the moment GitHub renders them.
 2. `data-ghpt-hidden` on each rendered diff's outermost wrapper (`slotOf()`).
 
 `slotOf()` climbs while the parent has only one child, but stops at a virtualized row
@@ -133,6 +135,43 @@ at a time.
 File order beats "open tab first": GitHub only shows a file once its own sequential queue
 reaches it, so fetching later files first just makes the queue wait.
 
+## The classic page (`/pull/N/files`)
+
+GitHub still serves the older, server-rendered Files changed page (for example when logged
+out, or with the new page's preview turned off). It works differently:
+
+- **File list:** no embedded JSON, but the sidebar tree lists every file at load as
+  `li#file-tree-item-diff-<digest>[data-tree-entry-type="file"]`, with the path in
+  `data-hydro-click-payload` (`payload.data.path`). `content.js` reads counts and paths from
+  there. Folders are `[data-tree-entry-type="directory"]` without `aria-expanded`.
+- **Diffs:** `div.js-diff-progressive-container > copilot-diff-entry > div#diff-<digest>.file`.
+  The page HTML holds the first 8 files; the rest come as HTML chunks from
+  `/owner/repo/diffs?start_entry=N&bytes=B&lines=L&...` (an `include-fragment`), where B and L
+  are the bytes and lines already rendered. A 167-file PR takes 2 chunks (~3.7 MB for the
+  first).
+- **Per-file loading:** large and deleted files get a "Load diff" placeholder:
+  `.js-diff-load-container > include-fragment.js-diff-entry-loader[data-fragment-url]`, where the
+  URL is `/owner/repo/diffs/<file index>?name=<head sha>&base_sha=...&sha1=...&sha2=...`. Its
+  `.js-diff-load` button makes GitHub load it.
+
+### Hack 3: classic on demand (page.js + content.js)
+
+Same experiment and condition as hack 1 (PR opens on a tab other than All).
+
+1. `page.js` rewrites the chunk request's `bytes` and `lines` to values over GitHub's page
+   budget. The server then sends **every remaining file in one response as a placeholder**
+   (~1.8 MB instead of ~3.7 MB + a second chunk, and no diffs to render), and the response's
+   loaders get a `data-ghpt-deferred` tag.
+2. `content.js` watches tagged loaders with an `IntersectionObserver` (1500 px margin) and clicks
+   their "Load diff" button when they come near the screen. Hidden files never intersect, so
+   they never load; switching tabs shows them and they load as you scroll.
+3. Placeholders with a reason text (e.g. "This file was deleted.") are left for the user, as
+   GitHub intends.
+
+Trade-off: over budget, GitHub drops the "Large diffs are not rendered by default" reason, so
+a genuinely large diff in the open tab loads when you scroll to it instead of waiting for a
+click. The first 8 files are in the page HTML and always render.
+
 ## Approaches tried and dropped
 
 - **CSS only** (the original). Hidden files were still fetched and rendered.
@@ -154,10 +193,13 @@ What to check, roughly in order of likelihood:
 
 1. **Selectors:** `script[data-target="react-app.embeddedData"]`,
    `[data-testid="virtualized-diffs-list"]`, `[data-index]` rows, `#diff-<digest>` ids,
-   `[role="tree"] li[role="treeitem"]`, the "Submit review" toolbar.
+   `[role="tree"] li[role="treeitem"]`, the "Submit review" toolbar. Classic page:
+   `li#file-tree-item-diff-*` and its `data-hydro-click-payload`, `copilot-diff-entry`,
+   `include-fragment.js-diff-entry-loader`, `.js-diff-load`.
 2. **Data shape:** `payload.pullRequestsChangesRoute.{diffSummaries, diffContents,
    virtualizeDiffEntries}`.
-3. **Endpoint:** `page_data/diff_entries` and its `paths` encoding.
+3. **Endpoints:** `page_data/diff_entries` and its `paths` encoding; on the classic page the
+   `diffs?start_entry=` chunk budget and `diffs/<index>` per-file loads.
 4. **Store:** the context provider whose value has
    `getState().diffSummariesActions.setDiffSummaries`, and `diffSummaries` keyed by path.
 5. **Loader rules:** sequential batches, the in-flight gotcha, priority loading in both list

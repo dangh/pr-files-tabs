@@ -160,16 +160,47 @@
     }
   }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-ghpt-active'] });
 
+  // The classic page renders the first few diffs in its HTML and fetches the rest as HTML
+  // chunks (/owner/repo/diffs?start_entry=N&bytes=B&lines=L, B and L being what is already
+  // rendered). Once those totals pass GitHub's page budget, the server sends every remaining
+  // file as a "Load diff" placeholder instead of rendering it: one small request, no diffs.
+  // content.js then loads the placeholders of the open tab as they near the screen.
+  const OVER_BUDGET = { bytes: '99999999', lines: '999999' };
+
+  function classicChunk(url) {
+    return /^\/[^/]+\/[^/]+\/diffs$/.test(url.pathname) && url.searchParams.has('start_entry');
+  }
+
+  function deferChunk(fetchWith, input, args, url) {
+    for (let [key, value] of Object.entries(OVER_BUDGET)) {
+      url.searchParams.set(key, value);
+    }
+    let rewritten = input instanceof Request ? new Request(url, input) : url.href;
+    return fetchWith(rewritten, ...args.slice(1)).then(async function (response) {
+      if (!response.ok) {
+        return response;
+      }
+      // Tag the placeholders so content.js loads only these, not GitHub's own "Load diff"
+      // cases on other pages.
+      let html = (await response.text()).replace(/<include-fragment(?=[^>]*\bjs-diff-entry-loader\b)/g, '<include-fragment data-ghpt-deferred');
+      let { status, statusText, headers } = response;
+      return new Response(html, { status, statusText, headers });
+    });
+  }
+
   // In-app navigation to the Files changed page fetches the same page data as JSON.
   let originalFetch = window.fetch;
   window.fetch = function (input) {
-    let request = originalFetch.apply(this, arguments);
     let url;
     try {
       url = new URL(String(input?.url ?? input), location.href);
     } catch (e) {
-      return request;
+      return originalFetch.apply(this, arguments);
     }
+    if (classicChunk(url) && wantsOnDemand(location.pathname)) {
+      return deferChunk(originalFetch.bind(this), input, [...arguments], url);
+    }
+    let request = originalFetch.apply(this, arguments);
     if (!/\/pull\/\d+\/(changes|files)\/?$/.test(url.pathname)) {
       return request;
     }
