@@ -22,7 +22,7 @@ Screenshots use a public PR (react/react#37778), with the signed-in account's av
 **Name:** PR Files Tabs
 
 **Summary** (132 characters max):
-Split GitHub pull request files into tabs like Source, Tests and Metadata, and load only the diffs you look at.
+Split GitHub pull request files into tabs like Source, Tests and Metadata, and load the tab you're on first.
 
 **Category:** Developer Tools. **Language:** English.
 
@@ -39,10 +39,12 @@ Split GitHub pull request files into tabs like Source, Tests and Metadata, and l
 > - Works on both the new and the classic Files changed page.
 >
 > Faster big PRs (experimental, on by default):
-> - Load diffs on demand: when a PR opens on a tab, GitHub only loads the diffs you scroll to,
->   instead of every file in the PR.
-> - Parallel diff loading: when every diff is needed, they load several at a time instead of
->   one request after another.
+> - Load the open tab first: when a PR opens on a tab, all of that tab's diffs load first, in
+>   large batches, instead of GitHub's one request at a time through the whole PR.
+> - Load the rest in the background: then every other diff loads, so switching tabs is
+>   instant and makes no more requests.
+> - Parallel diff loading: when GitHub loads diffs a few at a time, they load several requests
+>   at a time instead of one after another.
 >
 > No account, no tracking. Settings stay in your browser.
 

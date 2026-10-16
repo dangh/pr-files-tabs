@@ -13,7 +13,7 @@ changes.
 | `shared.js` | all | - | Config defaults, pattern matching, `prKey`, `initialKey` (which tab a PR opens on) |
 | `content.js` | isolated | `document_idle` | Tab bar, counts, hiding files with CSS, publishing state for the page scripts |
 | `content.css` | isolated | - | Tab bar styles, `[data-ghpt-hidden]` |
-| `page.js` | MAIN | `document_start` | Load diffs on demand: virtualized list + swapping GitHub's file list; classic chunk budget |
+| `page.js` | MAIN | `document_start` | Load the open tab first / the rest in the background: GitHub's file list and loader; the virtualized list when only the tab loads |
 | `prefetch.js` | MAIN | `document_start` | Parallel diff loading |
 | `options.*` | extension page | - | Settings |
 
@@ -81,37 +81,57 @@ two ways:
 wrapper that briefly held one hidden diff stayed hidden after GitHub put more rows into it,
 which blanked the whole list.
 
-## Hack 1: load diffs on demand (page.js)
+## Hack 1: load the open tab first, the rest in the background (page.js)
 
-**Goal:** when a PR opens on a tab other than All, don't fetch the other tabs' diffs.
+Two experiments, both on by default:
 
-1. **Force the virtualized list.** A `MutationObserver` on `document` (the root element
-   doesn't exist yet at `document_start`) catches the embedded data script, sets
-   `virtualizeDiffEntries = true` and writes the JSON back before GitHub's deferred bundles
-   read it. The parser streams large JSON into the script's existing text node, which fires
-   no `childList` record, so incomplete scripts are kept in a pending set and re-parsed on
-   every later batch of DOM changes. A `fetch` wrapper does the same to the route JSON
-   for in-app navigation.
-2. **Give GitHub only the open tab's files.** In the virtualized list, hidden rows still take
-   space and still fall inside the "near the viewport" window. A tab with 3 files at the end
-   of the list showed a blank screen. So `page.js` finds GitHub's store by walking React
-   fibers up from the diff list (`__reactFiber$...` -> `.return` until
-   `memoizedProps.value.getState().diffSummariesActions` exists) and calls
-   `setDiffSummaries()` with only the open tab's files. The list, tree and "viewed" counter
-   then show just those, and the loader only fetches what renders.
-3. **Switching tabs** changes `data-ghpt-active`; `page.js` swaps in the new tab's files, or
-   the full list for All. No reload, no navigation. The loader still knows every file, so
-   newly shown files load as they reach the screen.
-4. **Keeping the full list honest.** `page.js` subscribes to the store. If GitHub replaces the
+- **Load the open tab first** (`experiments.onDemandDiffs`): fetch every file of the open tab
+  before anything else.
+- **Load the rest in the background** (`experiments.backgroundLoad`): then fetch every other
+  file, so switching tabs needs no requests.
+
+The target order: page load, fetch the open tab's files (e.g. Source); then fetch every other
+file in the background; switching tabs then makes no requests.
+
+1. **Find GitHub's store.** `page.js` walks React fibers up from the diff list
+   (`__reactFiber$...` -> `.return` until `memoizedProps.value.getState().diffSummariesActions`
+   exists).
+2. **Give GitHub only the open tab's files.** `setDiffSummaries()` with only the open tab's
+   files; the list, tree and "viewed" counter then show just those. On All nothing is swapped
+   (unless a tab was swapped in before).
+3. **Ask the loader for the whole tab.** `progressiveDiffsActions.loadManyPriority(digests)`
+   jumps GitHub's queue and fetches all the given files **in one request**. Batches are
+   capped at 100 files and sent one at a time (the loader serves these calls last-in
+   first-out, so queueing several would scramble the order); each waits until the store marks
+   its files loaded (`entriesMap[digest].isLoaded`), or 20 s, since a failed request leaves
+   files "in flight" in GitHub's loader for good. Whatever is still missing is asked for again
+   every second: the virtualized list keeps queueing its own small loads, which otherwise made
+   the loader take a 96-file batch 4 files at a time. Files already loaded or in flight are
+   skipped by the loader, so asking again is harmless.
+4. **Then the rest** (background experiment): the same, for every file in `entriesMap` (the
+   loader's own list, built once from the full file list).
+5. **Switching tabs** changes `data-ghpt-active`; `page.js` swaps in the new tab's files and
+   starts a new run, which stops the old one after its current batch. Files already loaded
+   aren't requested again; the diff lines are cached with no expiry.
+6. **Keeping the full list honest.** `page.js` subscribes to the store. If GitHub replaces the
    summaries with the same set of files (e.g. one marked viewed), those versions are merged
    into the saved full list. If the set of files changes (e.g. new commits), that becomes the
    new full list and the tab is applied again.
 
-If the store isn't found or doesn't look as expected, nothing is swapped and CSS hiding
-still works. If PRs open on All, nothing here runs.
+With the background load **off**, GitHub's normal list would still fetch every file one request
+at a time, so `page.js` also switches GitHub to its **virtualized list** (normally used for huge
+PRs), which only fetches what it's asked for and what is near the viewport. A `MutationObserver`
+on `document` (the root element doesn't exist yet at `document_start`) catches the embedded data
+script, sets `virtualizeDiffEntries = true` and writes the JSON back before GitHub's deferred
+bundles read it. The parser streams large JSON into the script's existing text node, which fires
+no `childList` record, so incomplete scripts are kept in a pending set and re-parsed on every
+later batch of DOM changes. A `fetch` wrapper does the same to the route JSON for in-app
+navigation. Trade-off in that mode: Find on Page only sees diffs near the screen (GitHub shows
+its own banner about this). With the background load on, the normal list stays.
 
-Trade-offs: Find on Page only sees diffs near the screen (GitHub shows its own banner about
-this), and GitHub's tree and viewed counter show the open tab's files rather than the PR's.
+If the store isn't found or doesn't look as expected, nothing is swapped or requested and CSS
+hiding still works. GitHub's tree and viewed counter show the open tab's files rather than the
+PR's.
 
 ## Hack 2: parallel diff loading (prefetch.js)
 
@@ -130,7 +150,8 @@ at a time.
   (never a partial answer, see the gotcha above). Requests with extra context lines
   (`ctx` not all `:`) are passed through.
 - It stands down when the file list is virtualized, since fetching everything would undo
-  hack 1.
+  hack 1. With hack 1 on the normal list, its large batch went to GitHub directly in testing
+  while `prefetch.js` fetched the rest in parallel (~170 files fetched for 167).
 
 File order beats "open tab first": GitHub only shows a file once its own sequential queue
 reaches it, so fetching later files first just makes the queue wait.
@@ -163,31 +184,23 @@ right by the bar's auto margin. That row wraps rather than overflows, so `fit()`
 bar to a dropdown when it ends up on a second line. Without either toolbar the bar goes above
 the first diff.
 
-### Hack 3: classic on demand (page.js + content.js)
+### Loading on the classic page
 
-Same experiment and condition as hack 1 (PR opens on a tab other than All).
-
-1. `page.js` rewrites the chunk request's `bytes` and `lines` to values over GitHub's page
-   budget. The server then sends **every remaining file in one response as a placeholder**
-   (~1.8 MB instead of ~3.7 MB + a second chunk, and no diffs to render).
-2. Before handing the response to GitHub, `page.js` parses it in a `<template>` (inert: nothing
-   runs or upgrades), tags every loader `data-ghpt-deferred`, and sets `src` on the first 6
-   in the open tab so they start loading the moment GitHub inserts the chunk.
-3. `content.js` watches the other tagged loaders with an `IntersectionObserver` (1500 px
-   margin) and sets their `src` when they come near the screen. Hidden files never intersect,
-   so they never load; switching tabs shows them and they load as you scroll.
-4. Placeholders with a reason text (e.g. "This file was deleted.") are left for the user, as
-   GitHub intends.
-
-Loading goes through `src`, not GitHub's "Load diff" button: the button's handler also focuses
-the loaded diff, which scrolled the page to every file that loaded and pulled the next ones
-into range.
-
-Trade-off: over budget, GitHub drops the "Large diffs are not rendered by default" reason, so
-a genuinely large diff in the open tab loads when you scroll to it instead of waiting for a
-click. The first 8 files are in the page HTML and always render.
+The classic page loads as GitHub intends: its two HTML chunks render every file in a few
+seconds (about 6.5 s cold for a 167-file PR), the extension hides other tabs with CSS, and
+switching tabs makes no requests. Both loading experiments leave it alone (see "Approaches
+tried and dropped" for the placeholder trick that was tried).
 
 ## Approaches tried and dropped
+
+- **Classic page: diffs as placeholders, loaded per file.** Rewriting the chunk request's
+  `bytes` and `lines` past GitHub's page budget makes the server send every remaining file as a
+  "Load diff" placeholder in one response (~1.8 MB instead of ~3.7 MB), and each placeholder's
+  `include-fragment` loads its diff from `/owner/repo/diffs/<file index>?name=<head sha>&...`
+  when given a `src` (clicking "Load diff" instead also focuses the diff, scrolling the page).
+  Loading the open tab that way took 11-13 s and ~80 requests for a 96-file tab, and the
+  per-file HTML made a heavier page (~65,000 elements) than GitHub rendering all 167 files from
+  its chunks (~37,000) in about 6.5 s.
 
 - **CSS only** (the original). Hidden files were still fetched and rendered.
 - **Trimming GitHub's requests** to the open tab's paths. Works for the first load, but the
@@ -210,15 +223,14 @@ What to check, roughly in order of likelihood:
    `[data-testid="virtualized-diffs-list"]`, `[data-index]` rows, `#diff-<digest>` ids,
    `[role="tree"] li[role="treeitem"]`, the "Submit review" toolbar. Classic page:
    `li#file-tree-item-diff-*` and its `data-hydro-click-payload`, `copilot-diff-entry`,
-   `include-fragment.js-diff-entry-loader`, `.js-diff-load`.
+   `.pr-toolbar .diffbar` row.
 2. **Data shape:** `payload.pullRequestsChangesRoute.{diffSummaries, diffContents,
    virtualizeDiffEntries}`.
-3. **Endpoints:** `page_data/diff_entries` and its `paths` encoding; on the classic page the
-   `diffs?start_entry=` chunk budget and `diffs/<index>` per-file loads.
+3. **Endpoints:** `page_data/diff_entries` and its `paths` encoding.
 4. **Store:** the context provider whose value has
-   `getState().diffSummariesActions.setDiffSummaries`, and `diffSummaries` keyed by path.
-5. **Loader rules:** sequential batches, the in-flight gotcha, priority loading in both list
-   modes.
+   `getState().diffSummariesActions.setDiffSummaries`, `diffSummaries` keyed by path,
+   `progressiveDiffsActions.loadManyPriority` and `entriesMap[digest].isLoaded`.
+5. **Loader rules:** sequential batches, `loadManyPriority` fetching its list in one request,
+   the in-flight gotcha, priority loading in both list modes.
 
-Turning either experiment off in the options page restores GitHub's own loading for that
-part.
+Turning the experiments off in the options page restores GitHub's own loading.

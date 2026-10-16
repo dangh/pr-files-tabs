@@ -17,8 +17,10 @@ var GHPT = (function () {
       }
     ],
     experiments: {
-      // Use GitHub's virtualized diff list when a PR opens on a tab other than All (page.js).
+      // Load the open tab's diffs first (page.js, content.js). Named before it loaded whole tabs.
       onDemandDiffs: true,
+      // Then load every other diff in the background so tab switches need no requests.
+      backgroundLoad: true,
       // Fetch diff contents in parallel instead of GitHub's one request at a time (prefetch.js).
       parallelLoad: true
     }

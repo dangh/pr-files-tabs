@@ -11,21 +11,32 @@
     }
   }
 
-  // GitHub's normal list fetches every diff up front, one request at a time, so the files in
-  // the open tab wait behind all the others. Its virtualized list (normally reserved for huge
-  // PRs) only fetches diffs near the viewport, and files hidden by a tab never get there.
-  function wantsOnDemand(pathname) {
+  function experiments(config) {
+    return { tabFirst: config.experiments?.onDemandDiffs !== false, background: config.experiments?.backgroundLoad !== false };
+  }
+
+  // True when the PR at pathname opens on a tab other than All with "Load the open tab first" on.
+  function opensOnTab(pathname) {
     let config = cachedConfig();
-    if (!config?.tabs || config.experiments?.onDemandDiffs === false) {
+    if (!config?.tabs || !experiments(config).tabFirst) {
       return false;
     }
     let pr = GHPT.prKey(pathname);
     return Boolean(pr) && GHPT.initialKey(config, pr) !== 'all';
   }
 
+  // True when only the open tab should load: it opens on a tab and the background load is off.
+  // GitHub's normal list would fetch every file anyway, one request at a time, so switch to its
+  // virtualized list (normally reserved for huge PRs), which fetches only what it's asked for
+  // and what is near the viewport. With the background load on, everything is fetched anyway
+  // and the normal list keeps Find on Page working.
+  function onlyOpenTab(pathname) {
+    return opensOnTab(pathname) && !experiments(cachedConfig()).background;
+  }
+
   function patch(data, pathname) {
     let route = data?.payload?.pullRequestsChangesRoute;
-    if (!route || route.virtualizeDiffEntries || !wantsOnDemand(pathname)) {
+    if (!route || route.virtualizeDiffEntries || !onlyOpenTab(pathname)) {
       return false;
     }
     route.virtualizeDiffEntries = true;
@@ -46,11 +57,11 @@
     return true;
   }
 
-  // GitHub keeps the PR's file list in a store that its diff list and file tree read. Handing
-  // it only the open tab's files makes the list render just those, so the virtualized list
-  // has no gaps where hidden files sit and only loads what is on screen. The store is reached
-  // through React internals; if anything looks different GitHub is left alone and content.js
-  // still hides files with CSS.
+  // GitHub keeps the PR's file list in a store that its diff list and file tree read, next to
+  // its diff loader. Handing it only the open tab's files makes the list render just those (no
+  // gaps in the virtualized list), and the loader's loadManyPriority() fetches a whole list of
+  // files in one request. The store is reached through React internals; if anything looks
+  // different GitHub is left alone and content.js still hides files with CSS.
   let store = null;
   let full = null;
   let shown = null;
@@ -100,11 +111,7 @@
   function apply() {
     let key = document.documentElement.dataset.ghptActive;
     let config = cachedConfig();
-    if (!store || !key || !config?.tabs || config.experiments?.onDemandDiffs === false) {
-      return;
-    }
-    if (key === 'all' && !shown) {
-      // GitHub already has every file.
+    if (!store || !key || !config?.tabs || !experiments(config).tabFirst) {
       return;
     }
     let next = full;
@@ -117,9 +124,83 @@
         }
       }
     }
-    // Set first: the store notifies subscribers synchronously.
-    shown = next;
-    store.getState().diffSummariesActions.setDiffSummaries(next);
+    // On All, GitHub already has every file unless we swapped a tab in before.
+    if (key !== 'all' || shown) {
+      // Set first: the store notifies subscribers synchronously.
+      shown = next;
+      store.getState().diffSummariesActions.setDiffSummaries(next);
+    }
+    loadFiles(Object.values(next).map((summary) => summary.pathDigest), experiments(config).background);
+  }
+
+  // Files per loadManyPriority() call; GitHub fetches each call's files in one request.
+  const LOAD_BATCH = 100;
+  let loadRun = 0;
+
+  function isLoaded(target, digest) {
+    return Boolean(target.getState().entriesMap?.[digest]?.isLoaded);
+  }
+
+  // Asks GitHub's loader for the digests and resolves once it has them all, or after a while: a
+  // failed request leaves files "in flight" in GitHub's loader for good. The virtualized list
+  // keeps queueing its own small loads, which makes the loader take ours a few at a time, so
+  // whatever is still missing is asked for again every second (files already loaded or in
+  // flight are skipped by the loader).
+  function loadAndWait(target, digests) {
+    return new Promise(function (resolve) {
+      let missing = () => digests.filter((d) => !isLoaded(target, d));
+      let started = Date.now();
+      let timer = null;
+      let unsubscribe = null;
+      function ask() {
+        let rest = missing();
+        if (rest.length === 0 || Date.now() - started > 20000) {
+          finish();
+          return;
+        }
+        target.getState().progressiveDiffsActions.loadManyPriority(rest);
+        timer = setTimeout(ask, 1000);
+      }
+      function finish() {
+        clearTimeout(timer);
+        unsubscribe?.();
+        resolve();
+      }
+      unsubscribe = target.subscribe(function () {
+        if (missing().length === 0) {
+          finish();
+        }
+      });
+      ask();
+    });
+  }
+
+  // One batch at a time: the loader serves loadManyPriority() calls last-in first-out, so
+  // queueing several at once would scramble the order.
+  async function loadInBatches(target, digests, run) {
+    for (let i = 0; i < digests.length; i += LOAD_BATCH) {
+      let batch = digests.slice(i, i + LOAD_BATCH).filter((d) => !isLoaded(target, d));
+      if (run !== loadRun || store !== target) {
+        return;
+      }
+      if (batch.length > 0) {
+        await loadAndWait(target, batch);
+      }
+    }
+  }
+
+  // Fetch every file of the open tab, then (background experiment) every other file, so that
+  // switching tabs needs no more requests. A tab switch starts a new run, which goes first.
+  async function loadFiles(tabDigests, background) {
+    let target = store;
+    if (!target.getState().progressiveDiffsActions?.loadManyPriority || !target.getState().entriesMap) {
+      return;
+    }
+    let run = ++loadRun;
+    await loadInBatches(target, tabDigests, run);
+    if (background) {
+      await loadInBatches(target, Object.keys(target.getState().entriesMap), run);
+    }
   }
 
   // A new PR page (or in-app navigation) mounts a new store.
@@ -160,63 +241,6 @@
     }
   }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-ghpt-active'] });
 
-  // The classic page renders the first few diffs in its HTML and fetches the rest as HTML
-  // chunks (/owner/repo/diffs?start_entry=N&bytes=B&lines=L, B and L being what is already
-  // rendered). Once those totals pass GitHub's page budget, the server sends every remaining
-  // file as a "Load diff" placeholder instead of rendering it: one small request, no diffs.
-  // content.js then loads the placeholders of the open tab as they near the screen.
-  const OVER_BUDGET = { bytes: '99999999', lines: '999999' };
-
-  function classicChunk(url) {
-    return /^\/[^/]+\/[^/]+\/diffs$/.test(url.pathname) && url.searchParams.has('start_entry');
-  }
-
-  // The first files of the open tab start loading as soon as the chunk is inserted, without
-  // waiting for content.js to see them.
-  const EAGER = 6;
-
-  // Tags the placeholders so content.js loads only these, not GitHub's own "Load diff" cases,
-  // and gives the first few in the open tab a src so they load right away. A template parses
-  // the HTML without running or upgrading anything.
-  function markDeferred(html) {
-    let config = cachedConfig();
-    let key = GHPT.initialKey(config, GHPT.prKey(location.pathname));
-    let compiled = GHPT.compileConfig(config);
-    let template = document.createElement('template');
-    template.innerHTML = html;
-    let eager = 0;
-    for (let file of template.content.querySelectorAll('.file[data-tagsearch-path]')) {
-      let loader = file.querySelector('include-fragment.js-diff-entry-loader[data-fragment-url]');
-      if (!loader) {
-        continue;
-      }
-      loader.setAttribute('data-ghpt-deferred', '');
-      // A reason (e.g. "This file was deleted.") means GitHub itself wants a click.
-      let reason = file.querySelector('[id^="hidden-diff-reason"]')?.textContent.trim();
-      let inTab = GHPT.classify(compiled, file.dataset.tagsearchPath).has(Number(key));
-      if (eager < EAGER && inTab && !reason) {
-        loader.setAttribute('src', loader.dataset.fragmentUrl);
-        eager += 1;
-      }
-    }
-    return template.innerHTML;
-  }
-
-  function deferChunk(fetchWith, input, args, url) {
-    for (let [key, value] of Object.entries(OVER_BUDGET)) {
-      url.searchParams.set(key, value);
-    }
-    let rewritten = input instanceof Request ? new Request(url, input) : url.href;
-    return fetchWith(rewritten, ...args.slice(1)).then(async function (response) {
-      if (!response.ok) {
-        return response;
-      }
-      let html = markDeferred(await response.text());
-      let { status, statusText, headers } = response;
-      return new Response(html, { status, statusText, headers });
-    });
-  }
-
   // In-app navigation to the Files changed page fetches the same page data as JSON.
   let originalFetch = window.fetch;
   window.fetch = function (input) {
@@ -225,9 +249,6 @@
       url = new URL(String(input?.url ?? input), location.href);
     } catch (e) {
       return originalFetch.apply(this, arguments);
-    }
-    if (classicChunk(url) && wantsOnDemand(location.pathname)) {
-      return deferChunk(originalFetch.bind(this), input, [...arguments], url);
     }
     let request = originalFetch.apply(this, arguments);
     if (!/\/pull\/\d+\/(changes|files)\/?$/.test(url.pathname)) {

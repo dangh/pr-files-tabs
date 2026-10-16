@@ -41,21 +41,29 @@
 
   <h2 style="font-size:16px; margin-top:24px">Experiments</h2>
   <div class="row">
-    <label><input id="on-demand" type="checkbox"> Load diffs on demand</label><span class="badge">Experimental</span>
+    <label><input id="on-demand" type="checkbox"> Load the open tab first</label><span class="badge">Experimental</span>
   </div>
   <p class="hint">
-    When a PR opens on a tab other than All, switch GitHub to the list it uses for very large PRs,
-    which loads diffs as you scroll to them instead of fetching every file first. Files in other
-    tabs are skipped until you show them. Trade-off: Find on Page only sees diffs near the screen.
+    When a PR opens on a tab other than All, fetch every diff in that tab first, in large batches,
+    instead of GitHub's one request at a time through the whole PR (new Files changed page).
+  </p>
+  <div class="row">
+    <label><input id="background" type="checkbox"> Load the rest in the background</label><span class="badge">Experimental</span>
+  </div>
+  <p class="hint">
+    Then fetch every other diff in the PR, so switching tabs is instant and makes no requests.
+    With this off, only the open tab loads and other tabs load when you open them; GitHub's
+    large-PR list is used for that, so Find on Page only sees diffs near the screen. The classic
+    page always loads every diff, as GitHub does.
   </p>
   <div class="row">
     <label><input id="parallel" type="checkbox"> Parallel diff loading</label><span class="badge">Experimental</span>
   </div>
   <p class="hint">
-    When GitHub does fetch every file (a PR opened on All, or with the option above off), fetch
-    them in parallel instead of one request at a time and hand them to GitHub as it asks.
+    When GitHub fetches diffs a few files per request, fetch them several requests at a time
+    instead of one after another and hand them to GitHub as it asks.
   </p>
-  <p class="hint">Both experiments are on by default and take effect on the next page load.</p>
+  <p class="hint">All experiments are on by default and take effect on the next page load.</p>
 
   <div class="actions">
     <button id="save" type="button"><b>Save</b></button>

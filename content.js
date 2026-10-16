@@ -229,32 +229,6 @@
     }
   }
 
-  // Classic page: page.js has GitHub send the diffs as "Load diff" placeholders (tagged
-  // data-ghpt-deferred); load them as they come near the screen. Hidden files never do.
-  let nearScreen = new IntersectionObserver(function (entries) {
-    for (let entry of entries) {
-      // Setting src makes the include-fragment load itself. Clicking "Load diff" instead would
-      // also focus the diff, scrolling the page to every file that loads.
-      let url = entry.target.dataset.fragmentUrl;
-      // page.js already gave the first few a src; setting it again would refetch.
-      if (entry.isIntersecting && url && !entry.target.hasAttribute('src')) {
-        nearScreen.unobserve(entry.target);
-        entry.target.setAttribute('src', url);
-      }
-    }
-  }, { rootMargin: '1500px 0px' });
-
-  function watchDeferred() {
-    for (let loader of document.querySelectorAll('include-fragment[data-ghpt-deferred]:not([data-ghpt-watched])')) {
-      loader.dataset.ghptWatched = '1';
-      // A reason (e.g. "This file was deleted.") means GitHub itself wants a click; leave it.
-      let reason = loader.closest('.js-diff-load-container')?.querySelector('[id^="hidden-diff-reason"]');
-      if (!reason?.textContent.trim()) {
-        nearScreen.observe(loader);
-      }
-    }
-  }
-
   function render() {
     if (!ready) {
       return;
@@ -334,7 +308,6 @@
     for (let slot of hide) {
       slot.dataset.ghptHidden = '1';
     }
-    watchDeferred();
     if (summary) {
       writeFilterStyle(files, bucketByDiffId);
     } else {

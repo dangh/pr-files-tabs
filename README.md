@@ -26,68 +26,58 @@ One pattern per line; a tab shows a file when any pattern matches.
 
 ## Experiments
 
-Both are on by default and can be turned off in the options page.
+All on by default; each can be turned off in the options page.
 
-- **Load diffs on demand**. When a PR opens on a tab other than All, a page script
-  (`page.js`) switches GitHub to the virtualized list it uses for very large PRs, which
-  only fetches diffs near the viewport, and hands GitHub's diff store just the open tab's
-  files. Files in other tabs aren't fetched until you show them, and switching tabs needs
-  no reload. Trade-offs: Find on Page only sees diffs near the screen, and GitHub's own
-  file tree and "viewed" counter show the open tab's files. It reaches GitHub's store
-  through React internals; if those change it does nothing and tabs fall back to hiding
-  files with CSS. On the classic page it asks GitHub to send the diffs as "Load diff"
-  placeholders instead, and loads the open tab's as they come near the screen.
-- **Parallel diff loading**. GitHub fetches diff contents 4 files per
-  request, one request at a time, so a 160-file PR takes 30 s or more to fill in. A page
-  script (`prefetch.js`) wraps `fetch`, loads the same batches with about 5 requests in
-  flight, and answers GitHub's queued requests from them. Any batch that fails falls back
-  to GitHub's own request. It stays out of the way while the on-demand list is in use.
+- **Load the open tab first.** When a PR opens on a tab other than All, a page script
+  (`page.js`) hands GitHub's diff store just that tab's files and asks GitHub's own loader for
+  all of them, up to 100 files per request, instead of GitHub's one request at a time through
+  the whole PR. Applies to the new Files changed page.
+- **Load the rest in the background.** Then every other file is fetched the same way, so
+  switching tabs is instant and makes no requests. Turn it off to load only the open tab
+  (other tabs load when you open them); GitHub's large-PR list is used for that, so Find on
+  Page then only sees diffs near the screen.
+- **Parallel diff loading.** When GitHub does fetch diffs 4 files per request, a page script
+  (`prefetch.js`) fetches them about 5 requests at a time and answers GitHub's queued
+  requests from them. Any batch that fails falls back to GitHub's own request.
 
-How both work, and why: [ARCHITECTURE.md](ARCHITECTURE.md).
+The classic Files changed page already loads every diff in two requests, so it is left as is;
+switching tabs there makes no requests either.
+
+Trade-offs: GitHub's own file tree and "viewed" counter show the open tab's files. The page
+scripts reach GitHub's store through React internals; if those change they do nothing and
+tabs fall back to hiding files with CSS. How it all works: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Benchmarks
 
-Measured 2026-10-16 on [react/react#37778](https://github.com/react/react/pull/37778/changes)
-(167 files, ~2,000 lines changed), headless Chrome, logged in. Times are from navigation
-start. GitHub itself takes about 4-5.7 s before its first diff request; neither experiment
-changes that part.
+Measured 2026-10-17 on [react/react#37778](https://github.com/react/react/pull/37778/changes)
+(167 files), headless Chrome, opening on the Source tab (96 files), 2 runs each. Times are from
+navigation start; GitHub itself takes about 4-5.7 s before its first diff request. "Before" is
+v0.3.0 (diffs loaded on demand as they neared the screen).
 
-**Opening on a tab** (Load diffs on demand). Diff requests GitHub makes. Before, it goes on
-to fetch all 167 files in 42 sequential requests (~30 s+) whatever the tab. After, counted
-when the tab was ready (for Metadata, also 3 s later):
+**New page**
 
-| Opening tab | Before | After |
+| | Before | Defaults | Background load off |
+|---|---|---|---|
+| All Source diffs loaded | only when scrolled to | 6.7-8.1 s | 5.6-6.5 s |
+| Whole PR loaded | never | 8.1-8.8 s | never (by design) |
+| Diff requests during load | 2 | 11-12 | 5-7 |
+| Diff requests on 5 tab switches afterwards | 6-8 | **0** | 9 (other tabs load when opened) |
+
+Without the extension GitHub needs 42 sequential requests, 30-45 s, for the whole PR.
+
+**Classic page** (logged out, cold browser cache)
+
+| | Before | Now |
 |---|---|---|
-| Metadata (3 files) | 42 | 2-5 |
-| Scripts (`scripts/*`, last in the list) | 42 | 2-3 |
+| All Source diffs loaded | only when scrolled to | 1.9-7.4 s (with every other diff) |
+| Diff requests | 7 | 2 |
+| Diff requests on 5 tab switches afterwards | 19 | **0** |
 
-The first screen of the tab is ready at about the same time before and after (5-7 s),
-because GitHub already fetches on-screen diffs first. The saving is the ~160 diffs of
-other tabs that GitHub no longer fetches and renders in the background.
+**Opening on All** (Parallel diff loading, measured 2026-10-16): every diff loaded in 11-15 s
+instead of 35-47 s, about 5 requests in flight instead of 1.
 
-**Switching tabs** after opening on Metadata, no reloads: Tests 1.9 s, All 0.33 s,
-Source 0.35 s, back to Metadata 0.33 s. 6 diff requests for the whole session.
-
-**Opening on All** (Parallel diff loading). Time until every file has its diff:
-
-| | Before | After |
-|---|---|---|
-| All 167 files loaded | 35-47 s | 11-15 s |
-| Requests in flight | 1 | ~5 |
-
-**Classic page** (`/pull/N/files`, logged out, cold browser cache, 3 runs), opening on Tests:
-
-| | Before | After |
-|---|---|---|
-| First 3 Tests diffs shown | 4.3-5.6 s | 3.0-4.2 s |
-| Page elements | 37,378 | 19,564 |
-| Diff table rows rendered | 2,610 | 280 |
-| Diff requests | 2 chunks (~3.7 MB first) | 1 placeholder chunk + ~7 per-file |
-
-Further files of the tab load as you scroll to them.
-
-Diff contents were identical with the experiment on and off. Not measured yet: main-thread
-and memory cost, other PRs, and arriving at a PR from elsewhere on GitHub without a reload.
+Not measured yet: main-thread and memory cost, other PRs, and arriving at a PR from elsewhere on
+GitHub without a reload.
 
 ## Notes
 
