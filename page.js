@@ -12,7 +12,11 @@
   }
 
   function experiments(config) {
-    return { tabFirst: config.experiments?.onDemandDiffs !== false, background: config.experiments?.backgroundLoad !== false };
+    return {
+      tabFirst: config?.experiments?.onDemandDiffs !== false,
+      background: config?.experiments?.backgroundLoad !== false,
+      parallel: config?.experiments?.parallelLoad !== false
+    };
   }
 
   // True when the PR at pathname opens on a tab other than All with "Load the open tab first" on.
@@ -136,10 +140,20 @@
   // GitHub fetches each loadManyPriority() call's files in one request, with every path in its
   // URL (encoded twice). Long paths made 100-file batches fail with 414 URI Too Long, and files
   // from a failed request never load, so batches are cut by URL length as well as count.
+  // With parallel loading on, the fetch wrapper below splits each request into small parallel
+  // ones, so the URL never reaches GitHub and batches can be much larger.
   const LOAD_BATCH = 100;
   const LOAD_URL_BUDGET = 6000;
+  const PARALLEL_LOAD_BATCH = 300;
 
   function batches(target, digests) {
+    if (experiments(cachedConfig()).parallel) {
+      let out = [];
+      for (let i = 0; i < digests.length; i += PARALLEL_LOAD_BATCH) {
+        out.push(digests.slice(i, i + PARALLEL_LOAD_BATCH));
+      }
+      return out;
+    }
     let out = [];
     let batch = [];
     let length = 0;
@@ -178,7 +192,7 @@
       let unsubscribe = null;
       function ask() {
         let rest = missing();
-        if (rest.length === 0 || Date.now() - started > 20000) {
+        if (rest.length === 0 || Date.now() - started > 20000 + 100 * digests.length) {
           finish();
           return;
         }
@@ -265,6 +279,78 @@
     }
   }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-ghpt-active'] });
 
+  // GitHub's loader sends one diff request at a time. With parallel loading on, a large one (the
+  // batches loadFiles asks for) is split here into small requests that run several at a time,
+  // and their results are merged back in the order asked for. Each path has a matching ctx
+  // entry (context lines, ':'-separated), which is split alongside it.
+  const SPLIT_SIZE = 20;
+  const SPLIT_URL_BUDGET = 6000;
+  const SPLIT_PARALLEL = 6;
+
+  function splitDiffEntries(fetchWith, url, init) {
+    if (!/^\/[^/]+\/[^/]+\/pull\/\d+\/page_data\/diff_entries$/.test(url.pathname) || !experiments(cachedConfig()).parallel) {
+      return null;
+    }
+    // Raw pairs, so rebuilt URLs match GitHub's encoding byte for byte.
+    let pairs = url.search.slice(1).split('&').filter(Boolean).map((part) => {
+      let at = part.indexOf('=');
+      return at === -1 ? [part, ''] : [part.slice(0, at), part.slice(at + 1)];
+    });
+    let paths = (pairs.find(([k]) => k === 'paths')?.[1] || '').split('%2C');
+    let ctxRaw = pairs.find(([k]) => k === 'ctx')?.[1];
+    let ctx = ctxRaw === undefined ? null : decodeURIComponent(ctxRaw).split(':');
+    if (paths.length <= SPLIT_SIZE || (ctx && ctx.length !== paths.length)) {
+      return null;
+    }
+    let chunks = [];
+    let chunk = [];
+    let length = 0;
+    for (let i = 0; i < paths.length; i++) {
+      if (chunk.length > 0 && (chunk.length >= SPLIT_SIZE || length + paths[i].length + 3 > SPLIT_URL_BUDGET)) {
+        chunks.push(chunk);
+        chunk = [];
+        length = 0;
+      }
+      chunk.push(i);
+      length += paths[i].length + 3;
+    }
+    chunks.push(chunk);
+    let hrefOf = (indexes) => url.origin + url.pathname + '?' + pairs.map(([k, v]) => {
+      if (k === 'paths') {
+        return k + '=' + indexes.map((i) => paths[i]).join('%2C');
+      }
+      if (k === 'ctx' && ctx) {
+        return k + '=' + encodeURIComponent(indexes.map((i) => ctx[i]).join(':'));
+      }
+      return k + '=' + v;
+    }).join('&');
+    async function load(indexes) {
+      // One retry; a chunk that still fails fails the whole request, as GitHub's would.
+      for (let attempt = 0; ; attempt++) {
+        let response = await fetchWith(hrefOf(indexes), init);
+        if (response.ok) {
+          return response.json();
+        }
+        if (attempt > 0) {
+          throw new Error('diff_entries failed: ' + response.status);
+        }
+      }
+    }
+    let results = new Array(chunks.length);
+    let next = 0;
+    async function worker() {
+      while (next < chunks.length) {
+        let n = next++;
+        results[n] = await load(chunks[n]);
+      }
+    }
+    let workers = Array.from({ length: Math.min(SPLIT_PARALLEL, chunks.length) }, worker);
+    return Promise.all(workers).then(() => new Response(JSON.stringify(results.flat()), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    }));
+  }
+
   // In-app navigation to the Files changed page fetches the same page data as JSON.
   let originalFetch = window.fetch;
   window.fetch = function (input) {
@@ -273,6 +359,10 @@
       url = new URL(String(input?.url ?? input), location.href);
     } catch (e) {
       return originalFetch.apply(this, arguments);
+    }
+    let split = typeof input === 'string' || input instanceof URL ? splitDiffEntries(originalFetch.bind(this), url, arguments[1]) : null;
+    if (split) {
+      return split;
     }
     let request = originalFetch.apply(this, arguments);
     if (!/\/pull\/\d+\/(changes|files)\/?$/.test(url.pathname)) {

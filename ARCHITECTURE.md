@@ -14,7 +14,7 @@ changes.
 | `content.js` | isolated | `document_idle` | Tab bar, counts, hiding files with CSS, publishing state for the page scripts |
 | `content.css` | isolated | - | Tab bar styles, `[data-ghpt-hidden]` |
 | `page.js` | MAIN | `document_start` | Load the open tab first / the rest in the background: GitHub's file list and loader; the virtualized list when only the tab loads |
-| `prefetch.js` | MAIN | `document_start` | Parallel diff loading |
+| `prefetch.js` | MAIN | `document_start` | Parallel diff loading when GitHub drives loading |
 | `options.*` | extension page | - | Settings |
 
 "MAIN" scripts run in GitHub's own JavaScript context so they can wrap `window.fetch`, rewrite
@@ -136,13 +136,21 @@ If the store isn't found or doesn't look as expected, nothing is swapped or requ
 hiding still works. GitHub's tree and viewed counter show the open tab's files rather than the
 PR's.
 
-## Hack 2: parallel diff loading (prefetch.js)
+## Hack 2: parallel diff loading (page.js, prefetch.js)
 
-**Goal:** when GitHub does fetch everything (a PR opened on All), don't do it one request
-at a time.
+**Goal:** GitHub's loader sends one diff request at a time; run several at once.
 
-- `prefetch.js` loads after `page.js` in the same entry, so its `fetch` wrapper sits
-  outside `page.js`'s.
+**With "Load the open tab first" on** (page.js drives loading): batches go up to 300 files, and
+page.js's `fetch` wrapper splits every `diff_entries` request with more than 20 paths into
+requests of up to 20 paths (and ~6,000 characters of paths), runs 6 at a time, and returns
+their entries merged in the order asked for. GitHub's loader sees one request answered quickly.
+Each path has a matching `ctx` entry (context lines, `:`-separated), split alongside it; if the
+counts don't match the request goes through unchanged. A chunk that fails is retried once; if it
+fails again the whole request fails, as GitHub's would. Because the long URL never reaches GitHub,
+the 414 limit no longer applies to batch size.
+
+**With "Load the open tab first" off** (GitHub drives loading, 4 files per request): `prefetch.js`
+loads after `page.js` in the same entry, so its `fetch` wrapper sits outside `page.js`'s.
 - On GitHub's first `diff_entries` request it reads the file list (embedded data, or the
   route JSON after in-app navigation) and fetches every not-yet-loaded file itself, 4 per
   request, 5 requests in flight, in file order, reusing GitHub's query (`range`, `w`) and
@@ -152,11 +160,9 @@ at a time.
 - If any of a request's paths failed, GitHub's original request goes through unchanged
   (never a partial answer, see the gotcha above). Requests with extra context lines
   (`ctx` not all `:`) are passed through.
-- It stands down when the file list is virtualized, since fetching everything would undo
-  hack 1. With hack 1 on the normal list, its large batch went to GitHub directly in testing
-  while `prefetch.js` fetched the rest in parallel (~170 files fetched for 167).
+- It stands down when the file list is virtualized.
 
-File order beats "open tab first": GitHub only shows a file once its own sequential queue
+File order beats "open tab first" here: GitHub only shows a file once its own sequential queue
 reaches it, so fetching later files first just makes the queue wait.
 
 ## The classic page (`/pull/N/files`)

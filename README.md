@@ -36,9 +36,11 @@ All on by default; each can be turned off in the options page.
   switching tabs is instant and makes no requests. Turn it off to load only the open tab
   (other tabs load when you open them); GitHub's large-PR list is used for that, so Find on
   Page then only sees diffs near the screen.
-- **Parallel diff loading.** When GitHub does fetch diffs 4 files per request, a page script
-  (`prefetch.js`) fetches them about 5 requests at a time and answers GitHub's queued
-  requests from them. Any batch that fails falls back to GitHub's own request.
+- **Parallel diff loading.** GitHub's loader sends one diff request at a time. Large batches
+  are split into requests of up to 20 files that run 6 at a time and are merged back; when
+  GitHub drives loading itself (4 files per request), a page script (`prefetch.js`) fetches
+  ahead about 5 requests at a time and answers GitHub's queued requests. A failed part falls
+  back to GitHub's own request or fails it as GitHub would.
 
 The classic Files changed page already loads every diff in two requests, so it is left as is;
 switching tabs there makes no requests either.
@@ -65,15 +67,19 @@ v0.3.0 (diffs loaded on demand as they neared the screen).
 
 Without the extension GitHub needs 42 sequential requests, 30-45 s, for the whole PR.
 
-**Larger PRs** (new page, opening on Source, logged in; "GitHub alone" is this build with every
-experiment off). GitHub switches all three to its large-PR list by itself, so without the
-extension diffs only load as you scroll to them.
+**Larger PRs** (new page, opening on Source, logged in, 2 runs). "GitHub alone" is this build
+with every experiment off: GitHub switches these three to its large-PR list by itself, so
+without the extension diffs only load as you scroll to them. v0.4.0 loaded one batch at a time;
+now batches are split into parallel requests (Parallel diff loading).
 
-| PR | Files (Source) | GitHub alone after 90 s | Source loaded | Whole PR loaded | Requests on 5 tab switches |
-|---|---|---|---|---|---|
-| [microsoft/vscode#151512](https://github.com/microsoft/vscode/pull/151512/changes) | 898 (617) | 22 files | 36-38 s | 49-53 s | 5-6 → **0** |
-| [kubernetes/kubernetes#102196](https://github.com/kubernetes/kubernetes/pull/102196/changes) | 336 (286) | 8 files | 11-12 s | 12 s | 3 → **0** |
-| [vercel/next.js#78559](https://github.com/vercel/next.js/pull/78559/changes) | 770 (60) | 9 files | 12-13 s | 44-51 s | 5 → **0** |
+| PR | Files (Source) | GitHub alone after 90 s | Source loaded, v0.4.0 → now | Whole PR loaded, v0.4.0 → now |
+|---|---|---|---|---|
+| [react/react#37778](https://github.com/react/react/pull/37778/changes) | 167 (96) | (not virtualized) | 6.4-8.4 s → **5.2-6.1 s** | 6.8-8.4 s → **6.5-6.6 s** |
+| [microsoft/vscode#151512](https://github.com/microsoft/vscode/pull/151512/changes) | 898 (617) | 22 files | 30-35 s → **19-20 s** | 40-48 s → **22-23 s** |
+| [kubernetes/kubernetes#102196](https://github.com/kubernetes/kubernetes/pull/102196/changes) | 336 (286) | 8 files | 11 s → **7 s** | 12 s → **7.4-8.2 s** |
+| [vercel/next.js#78559](https://github.com/vercel/next.js/pull/78559/changes) | 770 (60) | 9 files | 11-12 s → 11-12 s | 44-48 s → **19 s** |
+
+Tab switches after loading made **0 requests** on every PR (GitHub alone: 3-6 per 5 switches).
 
 **Classic page** (logged out, cold browser cache)
 

@@ -60,8 +60,8 @@
     <label><input id="parallel" type="checkbox"> Parallel diff loading</label><span class="badge">Experimental</span>
   </div>
   <p class="hint">
-    When GitHub fetches diffs a few files per request, fetch them several requests at a time
-    instead of one after another and hand them to GitHub as it asks.
+    Fetch diffs several requests at a time instead of GitHub's one after another: large batches
+    are split into parallel requests, and GitHub's own small ones are fetched ahead.
   </p>
   <p class="hint">All experiments are on by default and take effect on the next page load.</p>
 

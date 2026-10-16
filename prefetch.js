@@ -13,11 +13,15 @@
   let plan = null;
 
   // content.js keeps a copy of the extension config here (see page.js); it is on by default.
+  // With "Load the open tab first" on, page.js drives loading in large batches and splits
+  // those into parallel requests itself, so this only handles GitHub's own 4-file requests
+  // when that experiment is off.
   function enabled() {
     try {
-      return JSON.parse(localStorage.getItem('ghpt:config'))?.experiments?.parallelLoad !== false;
+      let experiments = JSON.parse(localStorage.getItem('ghpt:config'))?.experiments;
+      return experiments?.parallelLoad !== false && experiments?.onDemandDiffs === false;
     } catch (e) {
-      return true;
+      return false;
     }
   }
 
