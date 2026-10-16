@@ -1,13 +1,14 @@
 # PR Files Tabs
 
 Chrome extension that adds configurable tabs (All / Source / Tests / Metadata by default)
-to the GitHub pull request **Files changed** view. Switching a tab filters both the diff
-list and the left file tree.
+to the GitHub pull request **Files changed** view, on both the new and the classic page.
+Switching a tab filters both the diff list and the left file tree.
 
 ## Install
 
 1. Open `chrome://extensions` and enable **Developer mode**.
-2. **Load unpacked** and pick this folder.
+2. **Load unpacked** and pick this folder, or drag in a zip from the
+   [releases](../../releases).
 3. Open a PR's Files changed page.
 
 ## Configure
@@ -74,22 +75,34 @@ Source 0.35 s, back to Metadata 0.33 s. 6 diff requests for the whole session.
 | All 167 files loaded | 35-47 s | 11-15 s |
 | Requests in flight | 1 | ~5 |
 
-**Classic page** (`/pull/N/files`, logged out), opening on Tests:
+**Classic page** (`/pull/N/files`, logged out, cold browser cache, 3 runs), opening on Tests:
 
 | | Before | After |
 |---|---|---|
-| First 3 / first 10 Tests diffs shown | 1.8-2.6 s | 1.5-2.8 s / 1.7-3.6 s |
-| Page elements | 37,390 | ~20,200 |
-| Diff table rows rendered | 2,610 | ~370 |
+| First 3 Tests diffs shown | 4.3-5.6 s | 3.0-4.2 s |
+| Page elements | 37,378 | 19,564 |
+| Diff table rows rendered | 2,610 | 280 |
+| Diff requests | 2 chunks (~3.7 MB first) | 1 placeholder chunk + ~7 per-file |
 
-On the classic page diffs show up about as fast; the gain is a page about half the size.
+Further files of the tab load as you scroll to them.
 
 Diff contents were identical with the experiment on and off. Not measured yet: main-thread
 and memory cost, other PRs, and arriving at a PR from elsewhere on GitHub without a reload.
 
 ## Notes
 
-- Reads the file list GitHub embeds in the page, so counts are complete on load and files
-  are hidden with a stylesheet before they render. Falls back to scanning the page when
-  that data is missing or stale.
+- Reads the file list GitHub embeds in the page (on the classic page, its file tree), so
+  counts are complete on load and files are hidden with a stylesheet before they render.
+  Falls back to scanning the page when that data is missing or stale.
 - Relies on GitHub's current Files changed markup; selectors may need updating if it changes.
+
+## Build and release
+
+- `scripts/build.sh` checks the scripts and the manifest and writes
+  `dist/pr-files-tabs-<version>.zip`. CI runs it on every push and pull request and keeps
+  the zip as a build artifact.
+- To release, bump `version` in `manifest.json`, commit, then tag and push it:
+  `git tag v0.4.0 && git push origin v0.4.0`. CI creates a GitHub release with the zip and,
+  once the store secrets are set, uploads and publishes it to the Chrome Web Store.
+- `store/` has the store listing, privacy policy, screenshots and promo images
+  (`store/render.sh` redraws the icons and promo tiles). See [store/README.md](store/README.md).

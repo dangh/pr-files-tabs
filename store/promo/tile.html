@@ -1,0 +1,37 @@
+<!doctype html>
+<!-- Promo tile source. render.sh screenshots it at 440x280 (small) and 1400x560 (marquee). -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; align-items: center; justify-content: center; gap: 6vh;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #0a3069 0%, #0969da 100%); color: #fff;
+    padding: 0 9vw; box-sizing: border-box;
+  }
+  img { height: 46vh; }
+  h1 { margin: 0 0 2.5vh; font-size: 11vh; letter-spacing: -0.02em; }
+  p { margin: 0 0 4vh; font-size: 5.6vh; color: #cfe3ff; line-height: 1.35; max-width: 60vw; }
+  .tabs { display: inline-flex; gap: 1vh; padding: 0.8vh; border-radius: 1.6vh; background: rgba(255,255,255,0.14); }
+  .tabs span { padding: 1vh 2.2vh; border-radius: 1.2vh; font-size: 4.6vh; color: #e6f0ff; }
+  .tabs span b { font-weight: 400; opacity: 0.75; margin-left: 1vh; }
+  .tabs .on { background: #fff; color: #0a3069; font-weight: 600; }
+  body.small { flex-direction: column; gap: 3vh; text-align: center; padding: 0; }
+  body.small img { height: 34vh; }
+  body.small h1 { font-size: 13vh; margin-bottom: 4vh; }
+  body.small p { display: none; }
+  body.small .tabs span { font-size: 6vh; }
+</style>
+</head>
+<body>
+  <img src="../../icons/icon.svg" alt="">
+  <div>
+    <h1>PR Files Tabs</h1>
+    <p>Review big GitHub pull requests one kind of file at a time, and load only the diffs you look at.</p>
+    <div class="tabs"><span>All<b>167</b></span><span>Source<b>96</b></span><span class="on">Tests<b>68</b></span><span>Metadata<b>3</b></span></div>
+  </div>
+  <script>if (location.hash === '#small') document.body.classList.add('small');</script>
+</body>
+</html>

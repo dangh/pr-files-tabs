@@ -1,0 +1,72 @@
+name: Build and release
+
+# Every push and pull request: check the extension and upload the zip as a build artifact.
+# A tag like v0.4.0 (matching manifest.json's version): also create a GitHub release with
+# the zip, and upload it to the Chrome Web Store when the store secrets are set.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: ./scripts/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: extension
+          path: dist
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: release
+    runs-on: ubuntu-latest
+    # Set these in Settings > Secrets and variables > Actions. See store/README.md.
+    env:
+      EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+      CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+      REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: extension
+          path: dist
+      - name: Skip without store credentials
+        if: env.EXTENSION_ID == '' || env.CLIENT_ID == '' || env.CLIENT_SECRET == '' || env.REFRESH_TOKEN == ''
+        run: echo "::notice::Chrome Web Store secrets not set; skipping store upload."
+      - uses: actions/setup-node@v4
+        if: env.EXTENSION_ID != '' && env.CLIENT_ID != '' && env.CLIENT_SECRET != '' && env.REFRESH_TOKEN != ''
+        with:
+          node-version: 22
+      - name: Upload and publish to the Chrome Web Store
+        if: env.EXTENSION_ID != '' && env.CLIENT_ID != '' && env.CLIENT_SECRET != '' && env.REFRESH_TOKEN != ''
+        # With no command it uploads, then publishes. Reads EXTENSION_ID, CLIENT_ID,
+        # CLIENT_SECRET and REFRESH_TOKEN from the environment.
+        run: npx --yes chrome-webstore-upload-cli@4 --source dist/*.zip
