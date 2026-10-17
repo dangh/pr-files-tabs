@@ -47,6 +47,32 @@
     return true;
   }
 
+  // GitHub server-renders the first diffs, and React only takes them over (and the store becomes
+  // reachable) a second or two later. content.js hides other tabs' files at document_idle; this
+  // writes the same #sift-filter stylesheet from the embedded file list as soon as it's parsed,
+  // so they don't show in between. content.js takes the stylesheet over when it runs.
+  function earlyFilter(data) {
+    let list = data?.payload?.pullRequestsChangesRoute?.diffSummaries;
+    let config = cachedConfig();
+    if (!Array.isArray(list) || !config?.tabs || document.documentElement.dataset.siftActive || document.getElementById('sift-filter')) {
+      return;
+    }
+    let key = SIFT.initialKey(config, SIFT.prKey(location.pathname));
+    if (key === 'all') {
+      return;
+    }
+    let compiled = SIFT.compileConfig(config);
+    let hidden = list.filter((summary) => !SIFT.classify(compiled, summary.path).has(Number(key)));
+    // A default tab with none of the PR's files shows All (content.js).
+    if (hidden.length === list.length) {
+      return;
+    }
+    let style = document.createElement('style');
+    style.id = 'sift-filter';
+    style.textContent = hidden.map((summary) => SIFT.hideCss(summary.pathDigest, summary.path)).join('\n');
+    (document.head || document.documentElement).append(style);
+  }
+
   // Returns false while the script's JSON is still incomplete.
   function patchScript(script) {
     let data;
@@ -55,6 +81,7 @@
     } catch (e) {
       return false;
     }
+    earlyFilter(data);
     if (patch(data, location.pathname)) {
       script.textContent = JSON.stringify(data);
     }
@@ -109,6 +136,7 @@
     store = found;
     full = { ...found.getState().diffSummaries };
     shown = null;
+    appliedKey = null;
     publish();
     found.subscribe(function (state) {
       if (store !== found || state.diffSummaries === shown) {
@@ -123,16 +151,23 @@
       // GitHub loaded a new file list (e.g. new commits pushed); it becomes the full list.
       full = { ...state.diffSummaries };
       shown = null;
+      appliedKey = null;
       publish();
       apply();
     });
     apply();
   }
 
+  // The tab the store was last cut down to; re-applying it would only make GitHub re-render.
+  let appliedKey = null;
+
   function apply() {
-    let key = document.documentElement.dataset.siftActive;
     let config = cachedConfig();
-    if (!store || !key || !config?.tabs || !experiments(config).tabFirst) {
+    // content.js sets the open tab, but only once it runs (document_idle), well after the store
+    // shows up. Until then work it out the same way, so other tabs' files never render.
+    let early = !document.documentElement.dataset.siftActive;
+    let key = early ? (config?.tabs && SIFT.initialKey(config, SIFT.prKey(location.pathname))) : document.documentElement.dataset.siftActive;
+    if (!store || !key || !config?.tabs || !experiments(config).tabFirst || key === appliedKey) {
       return;
     }
     let next = full;
@@ -144,7 +179,13 @@
           next[path] = summary;
         }
       }
+      // content.js shows All when the default tab has none of the PR's files; don't blank the list first.
+      if (early && Object.keys(next).length === 0) {
+        key = 'all';
+        next = full;
+      }
     }
+    appliedKey = key;
     // On All, GitHub already has every file unless we swapped a tab in before.
     if (key !== 'all' || shown) {
       // Set first: the store notifies subscribers synchronously.

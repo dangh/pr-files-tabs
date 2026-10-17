@@ -286,5 +286,12 @@ var SIFT = (function () {
     return keyForLabel(tabs, config.defaultTab) || 'all';
   }
 
-  return { DEFAULTS, compile, compileConfig, classify, load, prKey, tabList, readSaved, initialKey };
+  // The #sift-filter rules that hide one file's diff and tree row. New page: div > #diff-x.
+  // Classic page: copilot-diff-entry > #diff-x, and tree rows li#file-tree-item-diff-x.
+  function hideCss(digest, path) {
+    return 'div:has(> #diff-' + digest + '), copilot-diff-entry:has(> #diff-' + digest + ') { display: none !important; }\n' +
+      'li[role="treeitem"][id=' + JSON.stringify(path) + '], #file-tree-item-diff-' + digest + ' { display: none !important; }';
+  }
+
+  return { DEFAULTS, compile, compileConfig, classify, load, prKey, tabList, readSaved, initialKey, hideCss };
 })();

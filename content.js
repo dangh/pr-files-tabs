@@ -7,6 +7,8 @@
   let onDefault = false;
   let ready = false;
   let timer = null;
+  // Kept even while GitHub has thrown it out of the page, so it can be put back as is.
+  let barEl = null;
 
   function prKey() {
     return SIFT.prKey(location.pathname);
@@ -241,9 +243,7 @@
     if (active !== 'all') {
       for (let file of files) {
         if (!heldByDiffId.get('diff-' + file.digest).has(Number(active))) {
-          // New page: div > #diff-x. Classic page: copilot-diff-entry > #diff-x.
-          rules.push('div:has(> #diff-' + file.digest + '), copilot-diff-entry:has(> #diff-' + file.digest + ') { display: none !important; }');
-          rules.push('li[role="treeitem"][id=' + JSON.stringify(file.path) + '], #' + CLASSIC_TREE_FILE + file.digest + ' { display: none !important; }');
+          rules.push(SIFT.hideCss(file.digest, file.path));
         }
       }
     }
@@ -280,7 +280,7 @@
     if (!ready) {
       return;
     }
-    let bar = document.getElementById('sift-bar');
+    let bar = barEl;
     if (!onFilesPage()) {
       bar?.remove();
       document.getElementById('sift-filter')?.remove();
@@ -373,7 +373,7 @@
     filterTree(bucketByPath, bucketByDiffId);
 
     if (!bar) {
-      bar = document.createElement('div');
+      bar = barEl = document.createElement('div');
       bar.id = 'sift-bar';
       bar.setAttribute('role', 'tablist');
       bar.addEventListener('change', function (event) {
@@ -506,9 +506,23 @@
     timer = setTimeout(render, 200);
   }
 
+  // GitHub re-renders its toolbar while the page loads (e.g. when the file list changes), which
+  // throws the bar out. Put it back right away: observer callbacks run before the next paint, so
+  // the bar never visibly disappears.
+  function restoreBar() {
+    let bar = barEl;
+    if (bar && !bar.isConnected && ready && onFilesPage()) {
+      placeBar(bar, findContainers()[0]);
+      fit(bar);
+    }
+  }
+
   // GitHub is a SPA and lazily renders diffs, so re-run on DOM changes (debounced).
   window.addEventListener('resize', schedule);
-  new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(function () {
+    restoreBar();
+    schedule();
+  }).observe(document.body, { childList: true, subtree: true });
   // page.js has a new file list (a new PR, or new commits).
   document.addEventListener('sift:files', schedule);
 

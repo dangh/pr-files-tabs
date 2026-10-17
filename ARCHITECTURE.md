@@ -78,6 +78,15 @@ two ways:
    below), so files are hidden the moment GitHub renders them.
 2. `data-sift-hidden` on each rendered diff's outermost wrapper (`slotOf()`).
 
+**Before content.js runs.** GitHub server-renders the first diffs, and React takes them over
+(making the store reachable) a second or two later. `content.js` only runs at `document_idle`,
+so `page.js` writes the same `#sift-filter` rules (`SIFT.hideCss`) from the embedded file list
+the moment it's parsed, and works out the open tab itself until `content.js` sets it.
+
+**The bar.** GitHub re-renders its toolbar while the page loads, which throws the bar out.
+`content.js` puts it back from its MutationObserver, which runs before the next paint, so the
+bar never visibly disappears.
+
 **Which file list.** Counts and the CSS rules need every file in the PR, taken from the first of
 these that's available:
 
