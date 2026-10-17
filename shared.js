@@ -27,7 +27,11 @@ var GHPT = (function () {
           'package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml',
           'requirements.txt', 'Pipfile', 'Pipfile.lock', 'pyproject.toml', 'poetry.lock',
           'go.mod', 'go.sum', 'Cargo.toml', 'Cargo.lock', 'Gemfile', 'Gemfile.lock',
-          'composer.json', 'composer.lock', 'pom.xml', 'build.gradle', 'build.gradle.kts'
+          'composer.json', 'composer.lock', 'pom.xml', 'build.gradle', 'build.gradle.kts',
+          // Readmes and changelogs: doc extensions only (optionally localized, e.g. README.zh-CN.md),
+          // so source files like readmeParser.ts or changes.ts stay out.
+          '/(^|\\/)(readme|changelog|changes|history|release[-_]notes)(\\.[a-z]{2}([-_][a-z]{2})?)?\\.(md|markdown|mdx|rst|txt|adoc)$/i',
+          '/(^|\\/)(readme|changelog|changes)$/i'
         ]
       },
       {
