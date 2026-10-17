@@ -20,15 +20,17 @@ Switching a tab filters both the diff list and the left file tree.
 Open the extension's options page to add, rename and reorder tabs, and to choose which
 tab opens first on a PR. The tab you pick on a PR is remembered across refreshes.
 
-One pattern per line; a tab shows a file when any pattern matches.
+One pattern per line. Rules apply top to bottom and a later rule overrides an earlier one, like
+`.gitignore`. A tab whose first line is a `!` starts from every file, otherwise from none.
 
 - `package*.json` matches the file name (`*` any characters, `?` one character).
 - `services/*/lib/*` (contains `/`) matches the full path.
 - `/test/i` is a regex tested against the full path.
-- `!Manifest` excludes files that belong to the tab labelled Manifest; `!*.md` excludes
-  files matching a pattern. A tab with only `!` lines starts from every file.
-- Tabs can exclude each other (`!Infra` in Tests and `!Tests` in Infra): a file that matches
-  both goes to the tab listed first, so reorder the tabs to choose.
+- `!*.md` excludes files matching a pattern; a later `docs/*.md` brings some back.
+- `!Manifest` excludes files the tab labelled Manifest would hold: Manifest's rules are run on
+  the file, recursively expanding its own `!Tab` lines. References back to a tab already being
+  checked are skipped, so tabs can exclude each other (`!Infra` in Tests, `!Tests` in Infra):
+  a file both would hold then shows in neither (and lands in Source, which excludes both).
 
 ## Experiments
 

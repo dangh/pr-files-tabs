@@ -85,10 +85,10 @@ var GHPT = (function () {
   // Pattern syntax: "/regex/flags" tests the full path. Otherwise a glob where * is any
   // characters (including "/") and ? is one character. A glob without "/" tests the file
   // name only, a glob with "/" tests the full path. Globs are case-insensitive.
-  // A leading "!" excludes: "!Manifest" removes files that belong to the tab labelled
-  // Manifest, and "!*.md" or "!/docs/i" removes files matching that pattern. A tab holds a
-  // file when any plain pattern matches (or it has none) and no "!" pattern matches.
-  // Two tabs may exclude each other; a file matching both goes to the tab listed first.
+  // A leading "!" excludes: "!*.md" or "!/docs/i" removes files matching that pattern, and
+  // "!Manifest" removes files the tab labelled Manifest would hold (see classify).
+  // A tab's rules apply top to bottom and a later rule overrides an earlier one. A tab whose
+  // first rule is a "!" (or that has no rules) starts from every file, otherwise from none.
   function compile(pattern) {
     let text = pattern.trim();
     let regexForm = text.match(/^\/(.+)\/([a-z]*)$/);
@@ -114,67 +114,51 @@ var GHPT = (function () {
   function compileConfig(config) {
     let labels = config.tabs.map((tab) => tab.label.trim().toLowerCase());
     return config.tabs.map((tab) => {
-      let include = [];
-      let exclude = [];
+      let rules = [];
       for (let raw of tab.patterns) {
         let text = raw.trim();
-        if (!text.startsWith('!')) {
-          let matcher = compile(text);
-          if (matcher) {
-            include.push(matcher);
-          }
-          continue;
-        }
-        let rest = text.slice(1).trim();
-        let ref = labels.indexOf(rest.toLowerCase());
+        let exclude = text.startsWith('!');
+        let rest = exclude ? text.slice(1).trim() : text;
+        let ref = exclude ? labels.indexOf(rest.toLowerCase()) : -1;
         if (ref !== -1) {
-          exclude.push({ tab: ref });
+          rules.push({ exclude, tab: ref });
           continue;
         }
         let matcher = compile(rest);
         if (matcher) {
-          exclude.push({ matcher });
+          rules.push({ exclude, matcher });
         }
       }
-      return { label: tab.label, include, exclude };
+      return { label: tab.label, rules, startsWithAll: rules.length === 0 || rules[0].exclude };
     });
   }
 
   // Returns the set of tab indexes that hold the path.
-  // Tabs may exclude each other ("!Infra" in Tests and "!Tests" in Infra): a file matching
-  // both then goes to the tab listed first.
+  // "!Infra" in Tests runs Infra's rules on the path and excludes it if Infra holds it. That
+  // expands recursively, except that references back to a tab already being checked (Infra's
+  // "!Tests" while checking Tests) are ignored, so tabs that exclude each other can't loop:
+  // a file both would hold then shows in neither.
   function classify(compiled, path) {
-    let cache = new Map();
-    // Includes and pattern excludes only, ignoring tab exclusions.
-    function matches(index) {
-      let tab = compiled[index];
-      let result = tab.include.length === 0 || tab.include.some((m) => m.test(path));
-      return result && !tab.exclude.some((rule) => rule.matcher && rule.matcher.test(path));
-    }
-    function holds(index, visiting) {
-      if (cache.has(index)) {
-        return cache.get(index);
+    let memo = new Map();
+    function holds(index, skip) {
+      let key = index + ':' + [...skip].sort().join(',');
+      if (memo.has(key)) {
+        return memo.get(key);
       }
-      visiting.add(index);
-      let result = matches(index);
-      for (let rule of tab(index)) {
-        if (!result) {
-          break;
-        }
-        if (visiting.has(rule.tab)) {
-          // The excluded tab is waiting on this one, i.e. they exclude each other: the tab
-          // listed first keeps the file.
-          result = !(rule.tab < index && matches(rule.tab));
-        } else if (holds(rule.tab, visiting)) {
+      let tab = compiled[index];
+      let inner = new Set(skip).add(index);
+      let result = tab.startsWithAll;
+      for (let rule of tab.rules) {
+        if (rule.tab === undefined) {
+          if (rule.matcher.test(path)) {
+            result = !rule.exclude;
+          }
+        } else if (result && !inner.has(rule.tab) && holds(rule.tab, inner)) {
           result = false;
         }
       }
-      visiting.delete(index);
-      cache.set(index, result);
+      memo.set(key, result);
       return result;
-    }
-    function tab(index) {
-      return compiled[index].exclude.filter((rule) => rule.tab !== undefined);
     }
     let found = new Set();
     for (let index of compiled.keys()) {
