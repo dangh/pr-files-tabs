@@ -12,10 +12,17 @@ shot() { # url width height output
 }
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-for size in 32 48 128; do
-  printf '<body style="margin:0"><img src="%s/icons/icon.svg" width="%s" height="%s" style="display:block">' "$PWD" "$size" "$size" > "$tmp/$size.html"
-  shot "file://$tmp/$size.html" "$size" "$size" "icons/icon-$size.png"
-done
+# The 128 px store icon keeps the store's 16 px transparent margin. Toolbar and extension
+# page sizes (32, 48) use the same drawing cropped to the artwork, so they fill their canvas
+# like other extensions' icons; 16 px has its own full-bleed drawing.
+sed 's/viewBox="0 0 128 128"/viewBox="16 16 96 96"/' icons/icon.svg > "$tmp/icon-full.svg"
+render() { # svg size output
+  printf '<body style="margin:0"><img src="%s" width="%s" height="%s" style="display:block">' "$1" "$2" "$2" > "$tmp/$2.html"
+  shot "file://$tmp/$2.html" "$2" "$2" "$3"
+}
+render "$tmp/icon-full.svg" 32 icons/icon-32.png
+render "$tmp/icon-full.svg" 48 icons/icon-48.png
+render "$PWD/icons/icon.svg" 128 icons/icon-128.png
 printf '<body style="margin:0"><img src="%s/icons/icon-16.svg" width="16" height="16" style="display:block">' "$PWD" > "$tmp/16.html"
 shot "file://$tmp/16.html" 16 16 icons/icon-16.png
 shot "file://$PWD/store/promo/tile.html#small" 440 280 store/promo/small-tile.png
