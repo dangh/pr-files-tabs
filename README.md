@@ -1,24 +1,53 @@
-<img src="icons/icon-128.png" width="96" height="96" alt="">
+<p align="center"><img src="icons/icon-128.png" width="96" height="96" alt=""></p>
 
-# PR Files Tabs
+<h1 align="center">PR Files Tabs</h1>
 
-Chrome extension that adds configurable tabs (All / Source / Tests / Docs / Infra / Manifest / Artifacts by default)
-to the GitHub pull request **Files changed** view, on both the new and the classic page.
-Switching a tab filters both the diff list and the left file tree.
+<p align="center"><b>Review big GitHub pull requests one kind of file at a time.</b><br>
+Tabs for Source, Tests, Docs, Infra, Manifest and Artifacts on every pull request,<br>
+and big PRs that load fully in seconds.</p>
 
-![The Tests tab on a pull request's Files changed page: the tab bar sits in GitHub's toolbar and the file tree shows only test files](store/screenshots/1-tests-tab.png)
+<p align="center"><a href="../../releases/latest">Download</a> · <a href="#install">Install</a> · <a href="#benchmarks">Benchmarks</a></p>
+
+![The Tests tab on a pull request: the tab bar sits in GitHub's toolbar and the file tree shows only test files](store/screenshots/1-tests-tab.png)
+
+## Why
+
+In a 150-file pull request, the dozen files that need real review hide among lock files,
+snapshots, generated code, docs and CI config. And GitHub loads diffs one request at a time,
+so on a big PR you wait half a minute or more, or scroll and wait, before you can even look.
+
+PR Files Tabs fixes both, right on GitHub's Files changed page.
+
+## What you get
+
+- **One kind of file at a time.** Tabs for **Source, Tests, Docs, Infra, Manifest and
+  Artifacts**, each with a file count. The file tree follows the tab you're on.
+- **Smart defaults.** Lock files, readmes and changelogs go to Manifest; Dockerfiles,
+  Terraform, CDK, serverless and CI configs to Infra; `dist/`, minified and generated code to
+  Artifacts; test files (not test config) to Tests. Source is whatever's left: the code.
+- **Big PRs, loaded.** The tab you open loads first, the rest of the PR right after, several
+  requests at a time. A 167-file PR is fully loaded in about **6.5 s** instead of **30-45 s**;
+  an 898-file one in **22 s**, where GitHub alone had 22 files after 90 s.
+- **Instant tab switches.** Once loaded, switching tabs makes **no requests**.
+- **Your tabs, your rules.** Rename, reorder or add tabs with
+  [gitignore-style patterns](#make-your-own-tabs) you already know. Pick the tab PRs open on;
+  your choice on each PR is remembered across refreshes.
+- **Works on both Files changed pages,** the new one and the classic one.
+- **Private.** No account, no tracking, no servers. It only talks to GitHub, for the PR you're
+  viewing. [Privacy policy](store/PRIVACY.md).
 
 ## Install
 
-1. Open `chrome://extensions` and enable **Developer mode**.
-2. **Load unpacked** and pick this folder, or drag in a zip from the
-   [releases](../../releases).
-3. Open a PR's Files changed page.
+Chrome Web Store listing coming soon. Until then:
 
-## Configure
+1. Download the latest zip from [Releases](../../releases/latest) and unzip it.
+2. Open `chrome://extensions` and turn on **Developer mode**.
+3. Click **Load unpacked** and pick the unzipped folder.
+4. Open any pull request's **Files changed** page.
 
-Open the extension's options page to add, rename and reorder tabs, and to choose which
-tab opens first on a PR. The tab you pick on a PR is remembered across refreshes.
+## Make your own tabs
+
+Open the extension's options page to rename, reorder or add tabs, and to pick the tab PRs open on.
 
 One pattern per line, in [gitignore syntax](https://git-scm.com/docs/gitignore#_pattern_format)
 (matched case-insensitively). Rules apply top to bottom and a later rule overrides an earlier
@@ -37,28 +66,19 @@ one. A tab whose first line is a `!` starts from every file, otherwise from none
 
 ## Experiments
 
-All on by default; each can be turned off in the options page.
+The loading speed-ups are experiments, all on by default; turn any off in the options page.
 
-- **Load the open tab first.** When a PR opens on a tab other than All, a page script
-  (`page.js`) hands GitHub's diff store just that tab's files and asks GitHub's own loader for
-  all of them, up to 100 files per request, instead of GitHub's one request at a time through
-  the whole PR. Applies to the new Files changed page.
-- **Load the rest in the background.** Then every other file is fetched the same way, so
-  switching tabs is instant and makes no requests. Turn it off to load only the open tab
-  (other tabs load when you open them); GitHub's large-PR list is used for that, so Find on
-  Page then only sees diffs near the screen.
-- **Parallel diff loading.** GitHub's loader sends one diff request at a time. Large batches
-  are split into requests of up to 20 files that run 6 at a time and are merged back; when
-  GitHub drives loading itself (4 files per request), a page script (`prefetch.js`) fetches
-  ahead about 5 requests at a time and answers GitHub's queued requests. A failed part falls
-  back to GitHub's own request or fails it as GitHub would.
+- **Load the open tab first.** Asks GitHub's own diff loader for every file of the open tab in
+  large batches, instead of GitHub's one small request at a time through the whole PR.
+- **Load the rest in the background.** Then fetches every other file, so switching tabs is
+  instant. Off: only the open tab loads (GitHub's large-PR list is used for that, so Find on
+  Page then only sees diffs near the screen).
+- **Parallel diff loading.** Splits large requests into small ones that run 6 at a time.
 
-The classic Files changed page already loads every diff in two requests, so it is left as is;
-switching tabs there makes no requests either.
-
-Trade-offs: GitHub's own file tree and "viewed" counter show the open tab's files. The page
-scripts reach GitHub's store through React internals; if those change they do nothing and
-tabs fall back to hiding files with CSS. How it all works: [ARCHITECTURE.md](ARCHITECTURE.md).
+The classic Files changed page already loads every diff in two requests, so it's left as is.
+GitHub's own file tree and "viewed" counter show the open tab's files. The page scripts reach
+into GitHub's React internals; if GitHub changes them, they step aside and tabs fall back to
+hiding files with CSS. How it all works: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Benchmarks
 
@@ -105,13 +125,6 @@ instead of 35-47 s, about 5 requests in flight instead of 1.
 
 Not measured yet: main-thread and memory cost, and arriving at a PR from elsewhere on GitHub
 without a reload.
-
-## Notes
-
-- Reads the file list GitHub embeds in the page (on the classic page, its file tree), so
-  counts are complete on load and files are hidden with a stylesheet before they render.
-  Falls back to scanning the page when that data is missing or stale.
-- Relies on GitHub's current Files changed markup; selectors may need updating if it changes.
 
 ## Build and release
 
