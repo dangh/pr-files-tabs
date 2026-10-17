@@ -20,12 +20,15 @@ Switching a tab filters both the diff list and the left file tree.
 Open the extension's options page to add, rename and reorder tabs, and to choose which
 tab opens first on a PR. The tab you pick on a PR is remembered across refreshes.
 
-One pattern per line. Rules apply top to bottom and a later rule overrides an earlier one, like
-`.gitignore`. A tab whose first line is a `!` starts from every file, otherwise from none.
+One pattern per line, in [gitignore syntax](https://git-scm.com/docs/gitignore#_pattern_format)
+(matched case-insensitively). Rules apply top to bottom and a later rule overrides an earlier
+one. A tab whose first line is a `!` starts from every file, otherwise from none.
 
-- `package*.json` matches the file name (`*` any characters, `?` one character).
-- `services/*/lib/*` (contains `/`) matches the full path.
-- `/test/i` is a regex tested against the full path.
+- `*.md` matches a file or folder name at any depth; `package*.json` any name like it.
+- `docs/*.md` or `/build` (a slash at the start or middle) is relative to the repo root.
+- `test/` (trailing slash) matches folders: every file under any `test` folder.
+- `*` is anything but `/`, `?` one character, `[abc]` one of a set, `**` any folders
+  (`a/**/b.js`). `#` starts a comment; `\!` and `\#` escape a leading `!` or `#`.
 - `!*.md` excludes files matching a pattern; a later `docs/*.md` brings some back.
 - `!Manifest` excludes files the tab labelled Manifest would hold: Manifest's rules are run on
   the file, recursively expanding its own `!Tab` lines. References back to a tab already being

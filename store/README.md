@@ -35,8 +35,8 @@ Split GitHub pull request files into tabs like Source, Tests and Manifest, and l
 > - Tabs for Source, Tests, Docs, Infra (serverless, CDK, Terraform, Docker, CI), Manifest
 >   (dependencies, readmes, changelogs) and Artifacts (build output, minified and generated code)
 >   out of the box, with file counts.
-> - Make your own tabs with simple patterns: globs like `package*.json`, folders like
->   `services/*/lib/*`, regexes like `/test/i`, and exclusions like `!Manifest`.
+> - Make your own tabs with simple patterns: globs like `package*.json`, paths like
+>   `services/*/lib/*`, folders like `test/` (gitignore syntax), and exclusions like `!Manifest`.
 > - Pick the tab a PR opens on; the tab you choose on a PR is remembered across refreshes.
 > - The file tree follows the tab you're on.
 > - Works on both the new and the classic Files changed page.

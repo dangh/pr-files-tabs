@@ -126,7 +126,8 @@ document.getElementById('save').addEventListener('click', async function () {
   let invalid = [];
   for (let tab of config.tabs) {
     for (let pattern of tab.patterns) {
-      if (!GHPT.compile(pattern.replace(/^!/, ''))) {
+      // Comments are fine; a pattern that matches nothing (e.g. a bare "!" or "/") is not.
+      if (!pattern.startsWith('#') && !GHPT.compile(pattern.replace(/^!/, ''))) {
         invalid.push(pattern);
       }
     }

@@ -22,10 +22,10 @@
 <body>
   <h1>PR Files Tabs</h1>
   <p class="hint">
-    One pattern per line. Rules apply top to bottom; a later line overrides an earlier one.
-    A glob like <code>package*.json</code> matches the file name only (<code>*</code> = any characters,
-    <code>?</code> = one character). A glob with a slash like <code>services/*/lib/*</code> matches the full path.
-    <code>/regex/flags</code> such as <code>/test/i</code> matches the full path.<br>
+    One pattern per line, in <a href="https://git-scm.com/docs/gitignore#_pattern_format" target="_blank">gitignore syntax</a>
+    (case-insensitive). Rules apply top to bottom; a later line overrides an earlier one.
+    <code>*.md</code> matches a name at any depth, <code>docs/*.md</code> or <code>/build</code> is relative to the repo root,
+    <code>test/</code> matches every file under a <code>test</code> folder, <code>**</code> spans folders, <code>#</code> starts a comment.<br>
     <b>Exclude</b> with <code>!</code>: <code>!*.md</code> drops files matching that pattern, <code>!Manifest</code>
     drops files the Manifest tab would hold. A tab whose first line is a <code>!</code> starts from every file.
     Two tabs can exclude each other; a file both would hold then shows in neither.

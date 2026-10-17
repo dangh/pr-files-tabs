@@ -3,17 +3,18 @@ var GHPT = (function () {
   const DEFAULTS = {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
+    // Patterns use gitignore syntax (see compile). "#" lines are comments shown on the options page.
     tabs: [
-      { label: 'Source', patterns: ['!Manifest', '!Tests', '!Docs', '!Infra', '!Artifacts'] },
+      { label: 'Source', patterns: ['# Everything the other tabs don\'t claim.', '!Manifest', '!Tests', '!Docs', '!Infra', '!Artifacts'] },
       {
         label: 'Tests',
         patterns: [
-          // Test folders anywhere in the path.
-          '/(^|\\/)(__tests__|__snapshots__|__mocks__|tests?|specs?|e2e|testdata|testing)\\//i',
-          // Test files by name.
+          '# Test folders, anywhere.',
+          '__tests__/', '__snapshots__/', '__mocks__/', 'test/', 'tests/', 'spec/', 'specs/', 'e2e/', 'testdata/', 'testing/',
+          '# Test files by name.',
           '*.test.*', '*.spec.*', '*_test.go', '*_test.py', 'test_*.py', 'conftest.py',
           '*Test.java', '*Tests.java', '*Test.kt', '*Tests.cs', '*_spec.rb', '*.snap',
-          // Test config and setup aren't tests.
+          '# Test config and setup aren\'t tests.',
           '!jest.config.*', '!jest.setup.*', '!vitest.config.*', '!vitest.workspace.*',
           '!playwright.config.*', '!cypress.config.*', '!karma.conf.*', '!.mocharc*',
           '!pytest.ini', '!tox.ini', '!.nycrc*', '!setupTests.*', '!tsconfig*.json',
@@ -23,22 +24,26 @@ var GHPT = (function () {
       {
         label: 'Docs',
         patterns: [
-          // Markdown and other doc markup, except inside test folders (e.g. snapshot fixtures).
-          // Readmes and changelogs belong to Manifest.
-          '/^(?!.*(^|\\/)(__tests__|__snapshots__|tests?|fixtures?|testdata)\\/).*\\.(md|markdown|rst|adoc)$/i',
+          '# Markdown and other doc markup.',
+          '*.md', '*.markdown', '*.rst', '*.adoc',
+          '# Except inside test folders (snapshot fixtures) and readmes/changelogs (Manifest).',
+          '!__tests__/', '!__snapshots__/', '!test/', '!tests/', '!fixture/', '!fixtures/', '!testdata/',
           '!Manifest'
         ]
       },
       {
         label: 'Infra',
         patterns: [
-          // Infrastructure folders anywhere in the path.
-          '/(^|\\/)(infra|infrastructure|cdk|serverless|terraform|cloudformation|deploy|deployment|deployments|k8s|kubernetes|helm|charts|\\.circleci)\\//i',
-          '/(^|\\/)\\.github\\/(workflows|actions)\\//',
+          '# Infrastructure folders, anywhere.',
+          'infra/', 'infrastructure/', 'cdk/', 'serverless/', 'terraform/', 'cloudformation/',
+          'deploy/', 'deployment/', 'deployments/', 'k8s/', 'kubernetes/', 'helm/', 'charts/', '.circleci/',
+          '/.github/workflows/', '/.github/actions/',
+          '# Serverless, CDK, SAM, Pulumi, Terraform.',
           'serverless.yml', 'serverless.yaml', 'serverless.ts', 'serverless.js', 'serverless.json', 'serverless.*.yml',
           'cdk.json', 'cdk.context.json', '*-stack.ts', '*-stack.js', '*.stack.ts',
           'template.yaml', 'template.yml', 'samconfig.toml',
           'Pulumi.yaml', 'Pulumi.*.yaml', '*.tf', '*.tfvars', '*.hcl',
+          '# Containers and CI.',
           'Dockerfile', 'Dockerfile.*', '*.dockerfile', '.dockerignore',
           'docker-compose*.yml', 'docker-compose*.yaml', 'compose.yml', 'compose.yaml',
           'Jenkinsfile', '.gitlab-ci.yml', 'buildspec.yml', 'buildspec.yaml', 'Procfile', 'fly.toml'
@@ -47,26 +52,30 @@ var GHPT = (function () {
       {
         label: 'Manifest',
         patterns: [
+          '# Dependency manifests and lock files.',
           'package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml',
           'requirements.txt', 'Pipfile', 'Pipfile.lock', 'pyproject.toml', 'poetry.lock',
           'go.mod', 'go.sum', 'Cargo.toml', 'Cargo.lock', 'Gemfile', 'Gemfile.lock',
           'composer.json', 'composer.lock', 'pom.xml', 'build.gradle', 'build.gradle.kts',
-          // Readmes and changelogs: doc extensions only (optionally localized, e.g. README.zh-CN.md),
-          // so source files like readmeParser.ts or changes.ts stay out.
-          '/(^|\\/)(readme|changelog|changes|history|release[-_]notes)(\\.[a-z]{2}([-_][a-z]{2})?)?\\.(md|markdown|mdx|rst|txt|adoc)$/i',
-          '/(^|\\/)(readme|changelog|changes)$/i'
+          '# Readmes and changelogs (doc extensions only, so readmeParser.ts stays out).',
+          'README', 'CHANGELOG', 'CHANGES',
+          'README*.md', 'README*.markdown', 'README*.rst', 'README*.txt', 'README*.adoc',
+          'CHANGELOG*.md', 'CHANGELOG*.markdown', 'CHANGELOG*.rst', 'CHANGELOG*.txt', 'CHANGELOG*.adoc',
+          'CHANGES*.md', 'CHANGES*.markdown', 'CHANGES*.rst', 'CHANGES*.txt', 'CHANGES*.adoc',
+          'HISTORY*.md', 'HISTORY*.markdown', 'HISTORY*.rst', 'HISTORY*.txt', 'HISTORY*.adoc',
+          'RELEASE_NOTES*.md', 'RELEASE_NOTES*.markdown', 'RELEASE_NOTES*.rst', 'RELEASE_NOTES*.txt', 'RELEASE_NOTES*.adoc'
         ]
       },
       {
         label: 'Artifacts',
         patterns: [
-          // Build output and generated-code folders anywhere in the path.
-          '/(^|\\/)(dist|out|target|obj|coverage|\\.next|__generated__|generated|gen)\\//i',
-          // Minified and bundled output, source maps.
+          '# Build output and generated-code folders, anywhere.',
+          'dist/', 'out/', 'target/', 'obj/', 'coverage/', '.next/', '__generated__/', 'generated/', 'gen/',
+          '# Minified and bundled output, source maps.',
           '*.min.js', '*.min.css', '*.min.mjs', '*.bundle.js', '*.chunk.js', '*.map',
-          // Compiled binaries and bytecode.
+          '# Compiled binaries and bytecode.',
           '*.pyc', '*.class', '*.jar', '*.war', '*.wasm', '*.o', '*.a', '*.so', '*.dylib', '*.dll', '*.exe',
-          // Generated code (protobuf, Go, Dart, ...).
+          '# Generated code (protobuf, Go, Dart, ...).',
           '*.pb.go', '*.pb.gw.go', '*_pb2.py', '*_pb2_grpc.py', '*_pb.js', '*_pb.d.ts', '*_grpc_pb.js',
           'zz_generated*.go', '*_generated.go', '*.generated.*', '*.g.dart', '*.freezed.dart'
         ]
@@ -82,32 +91,73 @@ var GHPT = (function () {
     }
   };
 
-  // Pattern syntax: "/regex/flags" tests the full path. Otherwise a glob where * is any
-  // characters (including "/") and ? is one character. A glob without "/" tests the file
-  // name only, a glob with "/" tests the full path. Globs are case-insensitive.
-  // A leading "!" excludes: "!*.md" or "!/docs/i" removes files matching that pattern, and
-  // "!Manifest" removes files the tab labelled Manifest would hold (see classify).
+  // Patterns use gitignore syntax, matched case-insensitively against the file's path:
+  // - No slash (`*.md`, `dist`): matches a file or folder name at any depth.
+  // - A slash at the start or middle (`/build`, `docs/*.md`): relative to the repo root.
+  // - A trailing slash (`test/`): folders only, i.e. every file under such a folder.
+  // - `*` is anything but "/", `?` one character, `[abc]` one of a set, `**` any folders.
+  // - A leading "!" excludes ("!*.md"); "!Manifest" excludes what the Manifest tab holds.
+  //   "#" starts a comment; "\!" and "\#" escape a leading "!" or "#".
   // A tab's rules apply top to bottom and a later rule overrides an earlier one. A tab whose
   // first rule is a "!" (or that has no rules) starts from every file, otherwise from none.
+  // Returns null for blank and comment lines.
   function compile(pattern) {
     let text = pattern.trim();
-    let regexForm = text.match(/^\/(.+)\/([a-z]*)$/);
-    if (regexForm) {
-      try {
-        let re = new RegExp(regexForm[1], regexForm[2]);
-        return { test: (path) => re.test(path) };
-      } catch (e) {
-        return null;
-      }
+    if (!text || text.startsWith('#')) {
+      return null;
     }
+    if (text.startsWith('\\#') || text.startsWith('\\!')) {
+      text = text.slice(1);
+    }
+    let folderOnly = text.endsWith('/');
+    text = text.replace(/\/+$/, '');
+    let anchored = text.includes('/');
+    text = text.replace(/^\//, '');
     if (!text) {
       return null;
     }
-    let source = text.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.');
+    let source = '';
+    for (let i = 0; i < text.length; i++) {
+      let c = text[i];
+      if (c === '*' && text[i + 1] === '*') {
+        // "**/" is any number of folders; "**" elsewhere is anything.
+        if (text[i + 2] === '/') {
+          source += '(?:.*/)?';
+          i += 2;
+        } else {
+          source += '.*';
+          i += 1;
+        }
+      } else if (c === '*') {
+        source += '[^/]*';
+      } else if (c === '?') {
+        source += '[^/]';
+      } else if (c === '[' && text.indexOf(']', i + 2) !== -1) {
+        let close = text.indexOf(']', i + 2);
+        let set = text.slice(i + 1, close).replace(/^!/, '^').replace(/\\/g, '\\\\');
+        source += '[' + set + ']';
+        i = close;
+      } else if (c === '\\' && i + 1 < text.length) {
+        i += 1;
+        source += text[i].replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+      } else {
+        source += c.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+      }
+    }
     let re = new RegExp('^' + source + '$', 'i');
-    let fullPath = text.includes('/');
     return {
-      test: (path) => re.test(fullPath && path || path.split('/').pop())
+      // A pattern that matches a folder covers everything under it, so try every folder on
+      // the way down, then (unless the pattern is folder-only) the file itself.
+      test: function (path) {
+        let parts = path.split('/');
+        let last = folderOnly ? parts.length - 1 : parts.length;
+        for (let n = 1; n <= last; n++) {
+          if (re.test(anchored ? parts.slice(0, n).join('/') : parts[n - 1])) {
+            return true;
+          }
+        }
+        return false;
+      }
     };
   }
 
@@ -117,6 +167,9 @@ var GHPT = (function () {
       let rules = [];
       for (let raw of tab.patterns) {
         let text = raw.trim();
+        if (!text || text.startsWith('#')) {
+          continue;
+        }
         let exclude = text.startsWith('!');
         let rest = exclude ? text.slice(1).trim() : text;
         let ref = exclude ? labels.indexOf(rest.toLowerCase()) : -1;
