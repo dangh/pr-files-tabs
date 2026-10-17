@@ -259,13 +259,13 @@
     }
   }
 
-  // Sift's 16 px icon (icons/icon-16.svg), shown before the tabs.
-  const GLYPH = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">' +
-    '<rect x=".5" y=".5" width="15" height="15" rx="3.5" fill="#24292f" stroke="#30363d"/>' +
-    '<path d="M5 3v3M3.5 4.5h3" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-linecap="round"/>' +
-    '<path d="M10 4.5h2.5" stroke="#f85149" stroke-width="1.5" stroke-linecap="round"/>' +
-    '<path d="M3 7.5h10l-3.5 3.5v2L6.5 14v-3Z" fill="#e6edf3" stroke="#e6edf3" stroke-linejoin="round"/>' +
-    '<path d="M6.5 11h3v2l-3 1Z" fill="#4493f8"/></svg>';
+  // Sift's icon (icons/icon.svg), full-bleed at 24 px like the 32 and 48 px PNGs, shown before the tabs.
+  const GLYPH = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="16 16 96 96" width="24" height="24" aria-hidden="true">' +
+    '<rect x="17" y="17" width="94" height="94" rx="21" fill="#24292f" stroke="#30363d" stroke-width="2"/>' +
+    '<path d="M42 34v14m-7-7h14" fill="none" stroke="#3fb950" stroke-width="6" stroke-linecap="round"/>' +
+    '<path d="M78 41h14" fill="none" stroke="#f85149" stroke-width="6" stroke-linecap="round"/>' +
+    '<path d="M34 56h60L73 78v14l-18 8V78Z" fill="none" stroke="#e6edf3" stroke-width="7" stroke-linejoin="round"/>' +
+    '<path d="M55 78h18v14l-18 8Z" fill="#4493f8"/></svg>';
 
   function logo() {
     let span = document.createElement('span');
