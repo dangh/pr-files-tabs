@@ -38,8 +38,8 @@ Sift for GitHub fixes both, right on GitHub's Files changed page.
 
 ## Install
 
-**[Add Sift to Chrome from the Chrome Web Store](https://chromewebstore.google.com/detail/jkdaphdpihedahfccnneeloflldfejnn)** (the listing goes live once
-Google's review finishes; updates install automatically).
+**[Add Sift to Chrome from the Chrome Web Store](https://chromewebstore.google.com/detail/jkdaphdpihedahfccnneeloflldfejnn)**.
+Updates install automatically.
 
 Or install a release by hand:
 
