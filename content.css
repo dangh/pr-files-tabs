@@ -123,3 +123,26 @@
 #sift-bar .sift-logo svg {
   display: block;
 }
+
+/* GitHub's theme colors, so the icon matches light, dark and high-contrast themes.
+   The fallbacks are the light theme. */
+#sift-bar .sift-logo-tile {
+  fill: var(--bgColor-muted, #f6f8fa);
+  stroke: var(--borderColor-default, #d0d7de);
+}
+
+#sift-bar .sift-logo-add {
+  stroke: var(--fgColor-success, #1a7f37);
+}
+
+#sift-bar .sift-logo-del {
+  stroke: var(--fgColor-danger, #d1242f);
+}
+
+#sift-bar .sift-logo-funnel {
+  stroke: var(--fgColor-default, #1f2328);
+}
+
+#sift-bar .sift-logo-outlet {
+  fill: var(--fgColor-accent, #0969da);
+}

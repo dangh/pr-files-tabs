@@ -259,13 +259,14 @@
     }
   }
 
-  // Sift's icon (icons/icon.svg), full-bleed at 24 px like the 32 and 48 px PNGs, shown before the tabs.
+  // Sift's icon (icons/icon.svg), full-bleed at 24 px like the 32 and 48 px PNGs, shown before the
+  // tabs. Colors come from content.css so it follows GitHub's light or dark theme.
   const GLYPH = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="16 16 96 96" width="24" height="24" aria-hidden="true">' +
-    '<rect x="17" y="17" width="94" height="94" rx="21" fill="#24292f" stroke="#30363d" stroke-width="2"/>' +
-    '<path d="M42 34v14m-7-7h14" fill="none" stroke="#3fb950" stroke-width="6" stroke-linecap="round"/>' +
-    '<path d="M78 41h14" fill="none" stroke="#f85149" stroke-width="6" stroke-linecap="round"/>' +
-    '<path d="M34 56h60L73 78v14l-18 8V78Z" fill="none" stroke="#e6edf3" stroke-width="7" stroke-linejoin="round"/>' +
-    '<path d="M55 78h18v14l-18 8Z" fill="#4493f8"/></svg>';
+    '<rect class="sift-logo-tile" x="17" y="17" width="94" height="94" rx="21" stroke-width="2"/>' +
+    '<path class="sift-logo-add" d="M42 34v14m-7-7h14" fill="none" stroke-width="6" stroke-linecap="round"/>' +
+    '<path class="sift-logo-del" d="M78 41h14" fill="none" stroke-width="6" stroke-linecap="round"/>' +
+    '<path class="sift-logo-funnel" d="M34 56h60L73 78v14l-18 8V78Z" fill="none" stroke-width="7" stroke-linejoin="round"/>' +
+    '<path class="sift-logo-outlet" d="M55 78h18v14l-18 8Z"/></svg>';
 
   function logo() {
     let span = document.createElement('span');
