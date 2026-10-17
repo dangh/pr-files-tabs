@@ -21,9 +21,6 @@ node -e '
   const files = [
     ...Object.values(m.icons || {}),
     m.options_ui?.page,
-    m.background?.service_worker,
-    ...Object.values(m.action?.default_icon || {}),
-    "offscreen.html",
     ...m.content_scripts.flatMap((c) => [...(c.js || []), ...(c.css || [])])
   ].filter(Boolean);
   const missing = files.filter((f) => !fs.existsSync(f));

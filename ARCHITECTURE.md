@@ -16,8 +16,6 @@ changes.
 | `page.js` | MAIN | `document_start` | Load the open tab first / the rest in the background: GitHub's file list and loader; the virtualized list when only the tab loads |
 | `prefetch.js` | MAIN | `document_start` | Parallel diff loading when GitHub drives loading |
 | `options.*` | extension page | - | Settings: native controls styled after Cloudflare's Kumo design system |
-| `background.js` | service worker | - | Toolbar icon for light or dark mode; the icon opens the options page |
-| `offscreen.*` | offscreen page | - | Watches `prefers-color-scheme` for `background.js`, which can't |
 
 "MAIN" scripts run in GitHub's own JavaScript context so they can wrap `window.fetch`, rewrite
 GitHub's page data and reach its React state. Isolated scripts can't, but they can read
