@@ -6,6 +6,8 @@ Chrome extension that adds configurable tabs (All / Source / Tests / Metadata by
 to the GitHub pull request **Files changed** view, on both the new and the classic page.
 Switching a tab filters both the diff list and the left file tree.
 
+![The Tests tab on a pull request's Files changed page: the tab bar sits in GitHub's toolbar and the file tree shows only test files](store/screenshots/1-tests-tab.png)
+
 ## Install
 
 1. Open `chrome://extensions` and enable **Developer mode**.
