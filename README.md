@@ -51,7 +51,8 @@ Then open any pull request's **Files changed** page.
 
 ## Make your own tabs
 
-Open the extension's options page to rename, reorder or add tabs, and to pick the tab PRs open on.
+Open the extension's options page to rename, reorder or add tabs, pick the tab PRs open on,
+and choose whether tabs with no files in the open PR are hidden (on by default).
 
 One pattern per line, in [gitignore syntax](https://git-scm.com/docs/gitignore#_pattern_format)
 (matched case-insensitively). Rules apply top to bottom and a later rule overrides an earlier

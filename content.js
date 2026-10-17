@@ -353,7 +353,9 @@
       });
     }
 
-    let signature = tabs.map((t) => t.key + t.label + counts[t.key] + (t.key === active)).join('|');
+    // With hideEmptyTabs, tabs with no files are left out, except All and the open tab.
+    let shown = tabs.filter((t) => t.key === 'all' || t.key === active || config.hideEmptyTabs === false || counts[t.key] > 0);
+    let signature = shown.map((t) => t.key + t.label + counts[t.key] + (t.key === active)).join('|');
     if (bar.dataset.sig !== signature) {
       bar.dataset.sig = signature;
       bar.textContent = '';
@@ -361,7 +363,7 @@
       let group = document.createElement('div');
       group.className = 'sift-tabs';
       bar.append(group);
-      for (let tab of tabs) {
+      for (let tab of shown) {
         let btn = document.createElement('button');
         btn.type = 'button';
         btn.dataset.key = tab.key;
@@ -378,7 +380,7 @@
       let select = document.createElement('select');
       select.className = 'sift-select';
       select.setAttribute('aria-label', 'File filter');
-      for (let tab of tabs) {
+      for (let tab of shown) {
         select.append(new Option(tab.label + ' (' + counts[tab.key] + ')', tab.key));
       }
       select.value = active;

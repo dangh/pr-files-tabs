@@ -1,6 +1,7 @@
 let tabsEl = document.getElementById('tabs');
 let defaultEl = document.getElementById('default');
 let statusEl = document.getElementById('status');
+let hideEmptyEl = document.getElementById('hide-empty');
 let onDemandEl = document.getElementById('on-demand');
 let backgroundEl = document.getElementById('background');
 let parallelEl = document.getElementById('parallel');
@@ -56,6 +57,7 @@ function show(config) {
     addTab(tab);
   }
   refreshDefaults(config.defaultTab || '');
+  hideEmptyEl.checked = config.hideEmptyTabs !== false;
   onDemandEl.checked = config.experiments.onDemandDiffs;
   backgroundEl.checked = config.experiments.backgroundLoad;
   parallelEl.checked = config.experiments.parallelLoad;
@@ -71,7 +73,7 @@ function read() {
     }
   }
   let experiments = { onDemandDiffs: onDemandEl.checked, backgroundLoad: backgroundEl.checked, parallelLoad: parallelEl.checked };
-  return { tabs, defaultTab: defaultEl.value, experiments };
+  return { tabs, defaultTab: defaultEl.value, hideEmptyTabs: hideEmptyEl.checked, experiments };
 }
 
 function flash(text) {
