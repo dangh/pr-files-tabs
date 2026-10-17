@@ -22,9 +22,10 @@ Sift for GitHub fixes both, right on GitHub's Files changed page.
 
 - **One kind of file at a time.** Tabs for **Source, Tests, Docs, Infra, Manifest and
   Artifacts**, each with a file count. The file tree follows the tab you're on.
-- **Smart defaults.** Lock files, readmes and changelogs go to Manifest; Dockerfiles,
-  Terraform, CDK, serverless and CI configs to Infra; `dist/`, minified and generated code, archives to
-  Artifacts; test files (not test config) to Tests. Source is whatever's left: the code.
+- **Smart defaults.** Source is the code and business logic, nothing else. Lock files, readmes,
+  changelogs and tool config (ESLint, Prettier, TypeScript, Jest, bundlers, editors) go to
+  Manifest; Dockerfiles, Terraform, CDK, serverless and CI configs to Infra; `dist/`, minified and
+  generated code, archives to Artifacts; test cases, mocks and fixtures to Tests.
 - **Big PRs, loaded.** The tab you open loads first, the rest of the PR right after, several
   requests at a time. A 167-file PR is fully loaded in about **6.5 s** instead of **30-45 s**;
   an 898-file one in **22 s**, where GitHub alone had 22 files after 90 s.

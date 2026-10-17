@@ -33,7 +33,7 @@ Split GitHub pull request files into tabs like Source, Tests and Manifest, and l
 > Sift for GitHub adds tabs to GitHub's Files changed page so you can review one kind at a time.
 >
 > - Tabs for Source, Tests, Docs, Infra (serverless, CDK, Terraform, Docker, CI), Manifest
->   (dependencies, readmes, changelogs) and Artifacts (build output, minified and generated code)
+>   (dependencies, readmes, changelogs, tool config) and Artifacts (build output, minified and generated code)
 >   out of the box, with file counts.
 > - Make your own tabs with simple patterns: globs like `package*.json`, paths like
 >   `services/*/lib/*`, folders like `test/` (gitignore syntax), and exclusions like `!Manifest`.
