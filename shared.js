@@ -4,7 +4,7 @@ var GHPT = (function () {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
     tabs: [
-      { label: 'Source', patterns: ['!Metadata', '!Tests', '!Infra'] },
+      { label: 'Source', patterns: ['!Metadata', '!Tests', '!Infra', '!Artifacts'] },
       { label: 'Tests', patterns: ['/test/i'] },
       {
         label: 'Infra',
@@ -28,6 +28,20 @@ var GHPT = (function () {
           'requirements.txt', 'Pipfile', 'Pipfile.lock', 'pyproject.toml', 'poetry.lock',
           'go.mod', 'go.sum', 'Cargo.toml', 'Cargo.lock', 'Gemfile', 'Gemfile.lock',
           'composer.json', 'composer.lock', 'pom.xml', 'build.gradle', 'build.gradle.kts'
+        ]
+      },
+      {
+        label: 'Artifacts',
+        patterns: [
+          // Build output and generated-code folders anywhere in the path.
+          '/(^|\\/)(dist|out|target|obj|coverage|\\.next|__generated__|generated|gen)\\//i',
+          // Minified and bundled output, source maps.
+          '*.min.js', '*.min.css', '*.min.mjs', '*.bundle.js', '*.chunk.js', '*.map',
+          // Compiled binaries and bytecode.
+          '*.pyc', '*.class', '*.jar', '*.war', '*.wasm', '*.o', '*.a', '*.so', '*.dylib', '*.dll', '*.exe',
+          // Generated code (protobuf, Go, Dart, ...).
+          '*.pb.go', '*.pb.gw.go', '*_pb2.py', '*_pb2_grpc.py', '*_pb.js', '*_pb.d.ts', '*_grpc_pb.js',
+          'zz_generated*.go', '*_generated.go', '*.generated.*', '*.g.dart', '*.freezed.dart'
         ]
       }
     ],

@@ -2,7 +2,7 @@
 
 # PR Files Tabs
 
-Chrome extension that adds configurable tabs (All / Source / Tests / Infra / Metadata by default)
+Chrome extension that adds configurable tabs (All / Source / Tests / Infra / Metadata / Artifacts by default)
 to the GitHub pull request **Files changed** view, on both the new and the classic page.
 Switching a tab filters both the diff list and the left file tree.
 
