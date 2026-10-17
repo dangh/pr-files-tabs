@@ -44,16 +44,27 @@
   background: var(--bgColor-neutral-muted, #afb8c133);
 }
 
-/* Segmented control inside the sticky toolbar */
+#sift-bar .sift-tabs {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* In the sticky toolbar: the icon, then the tabs as a segmented control */
 #sift-bar.sift-inline {
   margin: 0 12px 0 auto;
+  gap: 8px;
+  border: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+#sift-bar.sift-inline .sift-tabs {
   gap: 2px;
   padding: 2px;
   border: 1px solid var(--borderColor-default, #d0d7de);
   border-radius: 6px;
   background: var(--bgColor-muted, #f6f8fa);
-  flex: 0 0 auto;
-  white-space: nowrap;
 }
 
 #sift-bar.sift-inline button {
@@ -88,13 +99,7 @@
 }
 
 /* Narrow toolbar: swap the buttons for a dropdown */
-#sift-bar.sift-inline.sift-compact {
-  padding: 0;
-  border: 0;
-  background: none;
-}
-
-#sift-bar.sift-inline.sift-compact button {
+#sift-bar.sift-inline.sift-compact .sift-tabs {
   display: none;
 }
 
@@ -107,4 +112,14 @@
   background: var(--bgColor-muted, #f6f8fa);
   border: 1px solid var(--borderColor-default, #d0d7de);
   border-radius: 6px;
+}
+
+/* Sift's icon at the start of the bar, outside the tabs */
+#sift-bar .sift-logo {
+  display: inline-flex;
+  align-items: center;
+}
+
+#sift-bar .sift-logo svg {
+  display: block;
 }

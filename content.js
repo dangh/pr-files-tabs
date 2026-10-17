@@ -229,6 +229,22 @@
     }
   }
 
+  // Sift's 16 px icon (icons/icon-16.svg), shown before the tabs.
+  const GLYPH = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">' +
+    '<rect x=".5" y=".5" width="15" height="15" rx="3.5" fill="#24292f" stroke="#30363d"/>' +
+    '<path d="M5 3v3M3.5 4.5h3" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-linecap="round"/>' +
+    '<path d="M10 4.5h2.5" stroke="#f85149" stroke-width="1.5" stroke-linecap="round"/>' +
+    '<path d="M3 7.5h10l-3.5 3.5v2L6.5 14v-3Z" fill="#e6edf3" stroke="#e6edf3" stroke-linejoin="round"/>' +
+    '<path d="M6.5 11h3v2l-3 1Z" fill="#4493f8"/></svg>';
+
+  function logo() {
+    let span = document.createElement('span');
+    span.className = 'sift-logo';
+    span.title = 'Sift';
+    span.append(new DOMParser().parseFromString(GLYPH, 'image/svg+xml').documentElement);
+    return span;
+  }
+
   function render() {
     if (!ready) {
       return;
@@ -341,6 +357,10 @@
     if (bar.dataset.sig !== signature) {
       bar.dataset.sig = signature;
       bar.textContent = '';
+      bar.append(logo());
+      let group = document.createElement('div');
+      group.className = 'sift-tabs';
+      bar.append(group);
       for (let tab of tabs) {
         let btn = document.createElement('button');
         btn.type = 'button';
@@ -352,7 +372,7 @@
         count.className = 'sift-count';
         count.textContent = String(counts[tab.key]);
         btn.append(count);
-        bar.append(btn);
+        group.append(btn);
       }
       // Shown instead of the buttons when the toolbar is too narrow (see fit()).
       let select = document.createElement('select');

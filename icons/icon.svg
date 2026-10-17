@@ -1,15 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- GitHub dark header canvas, Octicon-style pull request glyph, a row of tabs. Artwork stays inside 16..112 for the store icon padding. -->
-  <rect x="16" y="16" width="96" height="96" rx="22" fill="#24292f"/>
-  <rect x="30" y="26" width="20" height="8" rx="4" fill="#4493f8"/>
-  <rect x="54" y="26" width="20" height="8" rx="4" fill="#57606a"/>
-  <rect x="78" y="26" width="20" height="8" rx="4" fill="#57606a"/>
-  <g fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="44" cy="52" r="7"/>
-    <path d="M44 59v22"/>
-    <circle cx="44" cy="88" r="7"/>
-    <circle cx="84" cy="88" r="7"/>
-    <path d="M84 81V66a10 10 0 0 0-10-10h-9"/>
-    <path d="M71 48l-7 8 7 8"/>
-  </g>
+  <!-- Sift: green additions and red deletions fall into a funnel; the blue outlet is what's left
+       to review. GitHub dark canvas and border. Artwork stays inside 16..112 for store padding. -->
+  <rect x="17" y="17" width="94" height="94" rx="21" fill="#24292f" stroke="#30363d" stroke-width="2"/>
+  <path d="M42 34v14m-7-7h14" fill="none" stroke="#3fb950" stroke-width="6" stroke-linecap="round"/>
+  <path d="M78 41h14" fill="none" stroke="#f85149" stroke-width="6" stroke-linecap="round"/>
+  <path d="M34 56h60L73 78v14l-18 8V78Z" fill="none" stroke="#e6edf3" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M55 78h18v14l-18 8Z" fill="#4493f8"/>
 </svg>
