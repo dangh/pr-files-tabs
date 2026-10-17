@@ -1,3 +1,5 @@
+<img src="icons/icon-128.png" width="96" height="96" alt="">
+
 # PR Files Tabs
 
 Chrome extension that adds configurable tabs (All / Source / Tests / Metadata by default)

@@ -20,4 +20,6 @@ printf '<body style="margin:0"><img src="%s/icons/icon-16.svg" width="16" height
 shot "file://$tmp/16.html" 16 16 icons/icon-16.png
 shot "file://$PWD/store/promo/tile.html#small" 440 280 store/promo/small-tile.png
 shot "file://$PWD/store/promo/tile.html" 1400 560 store/promo/marquee.png
+# GitHub repository social preview (Settings > Social preview), 1280x640.
+shot "file://$PWD/store/promo/tile.html" 1280 640 store/promo/social-preview.png
 ls -l icons/*.png store/promo/*.png

@@ -14,6 +14,7 @@ Everything needed to list and publish PR Files Tabs. Images are regenerated with
 | `screenshots/4-options.png` | Screenshot | 1280x800 |
 | `promo/small-tile.png` | Small promo tile | 440x280 |
 | `promo/marquee.png` | Marquee promo tile | 1400x560 |
+| `promo/social-preview.png` | GitHub repo social preview (Settings > Social preview) | 1280x640 |
 
 Screenshots use a public PR (react/react#37778), with the signed-in account's avatar hidden.
 
