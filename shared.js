@@ -4,8 +4,23 @@ var GHPT = (function () {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
     tabs: [
-      { label: 'Source', patterns: ['!Metadata', '!Tests'] },
+      { label: 'Source', patterns: ['!Metadata', '!Tests', '!Infra'] },
       { label: 'Tests', patterns: ['/test/i'] },
+      {
+        label: 'Infra',
+        patterns: [
+          // Infrastructure folders anywhere in the path.
+          '/(^|\\/)(infra|infrastructure|cdk|serverless|terraform|cloudformation|deploy|deployment|deployments|k8s|kubernetes|helm|charts|\\.circleci)\\//i',
+          '/(^|\\/)\\.github\\/(workflows|actions)\\//',
+          'serverless.yml', 'serverless.yaml', 'serverless.ts', 'serverless.js', 'serverless.json', 'serverless.*.yml',
+          'cdk.json', 'cdk.context.json', '*-stack.ts', '*-stack.js', '*.stack.ts',
+          'template.yaml', 'template.yml', 'samconfig.toml',
+          'Pulumi.yaml', 'Pulumi.*.yaml', '*.tf', '*.tfvars', '*.hcl',
+          'Dockerfile', 'Dockerfile.*', '*.dockerfile', '.dockerignore',
+          'docker-compose*.yml', 'docker-compose*.yaml', 'compose.yml', 'compose.yaml',
+          'Jenkinsfile', '.gitlab-ci.yml', 'buildspec.yml', 'buildspec.yaml', 'Procfile', 'fly.toml'
+        ]
+      },
       {
         label: 'Metadata',
         patterns: [

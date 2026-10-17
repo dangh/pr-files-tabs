@@ -32,7 +32,8 @@ Split GitHub pull request files into tabs like Source, Tests and Metadata, and l
 > Big pull requests mix source changes with tests, lock files and generated files.
 > PR Files Tabs adds tabs to GitHub's Files changed page so you can review one kind at a time.
 >
-> - Tabs for Source, Tests and Metadata out of the box, with file counts.
+> - Tabs for Source, Tests, Infra (serverless, CDK, Terraform, Docker, CI) and Metadata out of
+>   the box, with file counts.
 > - Make your own tabs with simple patterns: globs like `package*.json`, folders like
 >   `services/*/lib/*`, regexes like `/test/i`, and exclusions like `!Metadata`.
 > - Pick the tab a PR opens on; the tab you choose on a PR is remembered across refreshes.
