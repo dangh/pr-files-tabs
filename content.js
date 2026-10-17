@@ -3,6 +3,8 @@
   let compiled = SIFT.compileConfig(config);
   let active = 'all';
   let activeFor = null;
+  // True until the full file list is known, if the PR opened on the default tab.
+  let onDefault = false;
   let ready = false;
   let timer = null;
 
@@ -179,26 +181,54 @@
     return summaryCache.get(first);
   }
 
+  // page.js's copy of the file list in GitHub's store: always the PR on screen.
+  let storeList = { text: null, map: null };
+
+  function readStoreList() {
+    let text = document.getElementById('sift-files')?.textContent || null;
+    if (text !== storeList.text) {
+      let map = null;
+      try {
+        let list = JSON.parse(text);
+        if (Array.isArray(list) && list.length > 0) {
+          map = new Map(list);
+        }
+      } catch (e) {
+        // not written yet
+      }
+      storeList = { text, map };
+    }
+    return storeList.map;
+  }
+
   function readSummary() {
     let classic = readClassicTree();
     if (classic) {
       return classic;
     }
+    let fromStore = readStoreList();
+    if (fromStore) {
+      return fromStore;
+    }
+    let number = location.pathname.match(/\/pull\/(\d+)/)?.[1];
     for (let script of document.querySelectorAll('script[data-target="react-app.embeddedData"]')) {
       if (!summaryCache.has(script)) {
-        let map = null;
+        let entry = null;
         try {
-          let list = JSON.parse(script.textContent)?.payload?.pullRequestsChangesRoute?.diffSummaries;
+          let route = JSON.parse(script.textContent)?.payload?.pullRequestsChangesRoute;
+          let list = route?.diffSummaries;
           if (Array.isArray(list) && list.length > 0) {
-            map = new Map(list.map((s) => [s.pathDigest, s.path]));
+            entry = { number: route.pullRequest?.number, map: new Map(list.map((s) => [s.pathDigest, s.path])) };
           }
         } catch (e) {
           // not the script we want
         }
-        summaryCache.set(script, map);
+        summaryCache.set(script, entry);
       }
-      if (summaryCache.get(script)) {
-        return summaryCache.get(script);
+      let entry = summaryCache.get(script);
+      // The embedded data stays on the first PR after in-app navigation to another one.
+      if (entry && (entry.number === undefined || String(entry.number) === number)) {
+        return entry.map;
       }
     }
     return null;
@@ -273,13 +303,10 @@
     if (activeFor !== pr) {
       activeFor = pr;
       active = SIFT.initialKey(config, pr);
+      onDefault = !SIFT.readSaved(pr);
     }
     if (!tabs.some((t) => t.key === active)) {
       active = 'all';
-    }
-    // page.js watches this to hand GitHub only the open tab's files.
-    if (document.documentElement.dataset.siftActive !== active) {
-      document.documentElement.dataset.siftActive = active;
     }
 
     let files = [];
@@ -306,6 +333,18 @@
       for (let index of held) {
         counts[String(index)] += 1;
       }
+    }
+    // A PR opened on the default tab shows All when that tab has none of its files. Only the full
+    // list can tell; rendered diffs may be just the open tab's.
+    if (summary && onDefault) {
+      onDefault = false;
+      if (counts[active] === 0) {
+        active = 'all';
+      }
+    }
+    // page.js watches this to hand GitHub only the open tab's files.
+    if (document.documentElement.dataset.siftActive !== active) {
+      document.documentElement.dataset.siftActive = active;
     }
     let hide = new Set();
     for (let el of containers) {
@@ -469,6 +508,8 @@
   // GitHub is a SPA and lazily renders diffs, so re-run on DOM changes (debounced).
   window.addEventListener('resize', schedule);
   new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+  // page.js has a new file list (a new PR, or new commits).
+  document.addEventListener('sift:files', schedule);
 
   chrome.storage.onChanged.addListener(async function (changes) {
     if (changes.config) {

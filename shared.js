@@ -283,5 +283,5 @@ var SIFT = (function () {
     return keyForLabel(tabs, config.defaultTab) || 'all';
   }
 
-  return { DEFAULTS, compile, compileConfig, classify, load, prKey, tabList, initialKey };
+  return { DEFAULTS, compile, compileConfig, classify, load, prKey, tabList, readSaved, initialKey };
 })();

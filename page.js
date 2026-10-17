@@ -90,10 +90,26 @@
     return keys.length === Object.keys(b).length && keys.every((k) => k in b);
   }
 
+  // content.js runs in another JS world and can't reach the store, so the full file list is
+  // handed over in the DOM. It can't use the embedded page data instead (that stays on the first
+  // PR after in-app navigation) or the rendered diffs (only the open tab's once we swap).
+  function publish() {
+    let el = document.getElementById('sift-files');
+    if (!el) {
+      el = document.createElement('script');
+      el.type = 'application/json';
+      el.id = 'sift-files';
+      (document.head || document.documentElement).append(el);
+    }
+    el.textContent = JSON.stringify(Object.entries(full).map(([path, summary]) => [summary.pathDigest, path]));
+    document.dispatchEvent(new Event('sift:files'));
+  }
+
   function track(found) {
     store = found;
     full = { ...found.getState().diffSummaries };
     shown = null;
+    publish();
     found.subscribe(function (state) {
       if (store !== found || state.diffSummaries === shown) {
         return;
@@ -107,6 +123,7 @@
       // GitHub loaded a new file list (e.g. new commits pushed); it becomes the full list.
       full = { ...state.diffSummaries };
       shown = null;
+      publish();
       apply();
     });
     apply();
@@ -242,8 +259,15 @@
   }
 
   // A new PR page (or in-app navigation) mounts a new store.
+  let lookupTimer = null;
+
   function lookForStore() {
     if (Date.now() - lastLookup < 300) {
+      // Look again once the throttle ends, in case the DOM goes quiet right after the new store mounts.
+      lookupTimer ??= setTimeout(function () {
+        lookupTimer = null;
+        lookForStore();
+      }, 300);
       return;
     }
     lastLookup = Date.now();

@@ -72,9 +72,27 @@ Each file in the active tab is classified with `SIFT.classify()`. Files outside 
 two ways:
 
 1. A `<style id="sift-filter">` with `div:has(> #diff-<digest>)` (classic:
-   `copilot-diff-entry:has(> ...)`) and tree-item rules, built from the embedded file list
-   (classic: the file tree), so files are hidden the moment GitHub renders them.
+   `copilot-diff-entry:has(> ...)`) and tree-item rules, built from the full file list (see
+   below), so files are hidden the moment GitHub renders them.
 2. `data-sift-hidden` on each rendered diff's outermost wrapper (`slotOf()`).
+
+**Which file list.** Counts and the CSS rules need every file in the PR, taken from the first of
+these that's available:
+
+1. On the classic page, the file tree.
+2. `page.js`'s copy of the store's list, written to `<script type="application/json"
+   id="sift-files">` with a `sift:files` event. `content.js` runs in another JS world and can't
+   reach the store itself.
+3. The embedded data, only if its PR number matches the URL.
+4. The rendered diffs.
+
+The embedded data can't come first: after in-app navigation to another PR (for example
+through a PR stack's menu) it still describes the first PR. Rendered diffs come last because
+once the store holds only one tab's files, that's all that renders, so counting them is wrong.
+A list missing a rendered diff is treated as stale and skipped.
+
+A PR that opens on the default tab (no tab picked on it yet) shows All when the full list
+puts no files in that tab.
 
 `slotOf()` climbs while the parent has only one child, but stops at a virtualized row
 (`[data-index]`), and every pass clears marks it doesn't set again. Without both rules a
