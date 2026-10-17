@@ -6,7 +6,7 @@
 Tabs for Source, Tests, Docs, Infra, Manifest and Artifacts on every pull request,<br>
 and big PRs that load fully in seconds.</p>
 
-<p align="center"><a href="../../releases/latest">Download</a> · <a href="#install">Install</a> · <a href="#benchmarks">Benchmarks</a></p>
+<p align="center"><a href="https://chromewebstore.google.com/detail/jkdaphdpihedahfccnneeloflldfejnn"><b>Add to Chrome</b></a> · <a href="#install">Install</a> · <a href="#benchmarks">Benchmarks</a></p>
 
 ![The Tests tab on a pull request: the tab bar sits in GitHub's toolbar and the file tree shows only test files](store/screenshots/1-tests-tab.png)
 
@@ -38,12 +38,16 @@ Sift for GitHub fixes both, right on GitHub's Files changed page.
 
 ## Install
 
-Chrome Web Store listing coming soon. Until then:
+**[Add Sift to Chrome from the Chrome Web Store](https://chromewebstore.google.com/detail/jkdaphdpihedahfccnneeloflldfejnn)** (the listing goes live once
+Google's review finishes; updates install automatically).
+
+Or install a release by hand:
 
 1. Download the latest zip from [Releases](../../releases/latest) and unzip it.
 2. Open `chrome://extensions` and turn on **Developer mode**.
 3. Click **Load unpacked** and pick the unzipped folder.
-4. Open any pull request's **Files changed** page.
+
+Then open any pull request's **Files changed** page.
 
 ## Make your own tabs
 
@@ -132,7 +136,7 @@ without a reload.
   `dist/sift-for-github-<version>.zip`. CI runs it on every push and pull request and keeps
   the zip as a build artifact.
 - To release, bump `version` in `manifest.json`, commit, then tag and push it:
-  `git tag v0.4.0 && git push origin v0.4.0`. CI creates a GitHub release with the zip and,
-  once the store secrets are set, uploads and publishes it to the Chrome Web Store.
+  `git tag v0.7.0 && git push origin v0.7.0`. CI creates a GitHub release with the zip and
+  uploads and publishes it to the [Chrome Web Store listing](https://chromewebstore.google.com/detail/jkdaphdpihedahfccnneeloflldfejnn).
 - `store/` has the store listing, privacy policy, screenshots and promo images
   (`store/render.sh` redraws the icons and promo tiles). See [store/README.md](store/README.md).
