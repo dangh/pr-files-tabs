@@ -2,7 +2,7 @@
 
 # PR Files Tabs
 
-Chrome extension that adds configurable tabs (All / Source / Tests / Docs / Infra / Metadata / Artifacts by default)
+Chrome extension that adds configurable tabs (All / Source / Tests / Docs / Infra / Manifest / Artifacts by default)
 to the GitHub pull request **Files changed** view, on both the new and the classic page.
 Switching a tab filters both the diff list and the left file tree.
 
@@ -25,7 +25,7 @@ One pattern per line; a tab shows a file when any pattern matches.
 - `package*.json` matches the file name (`*` any characters, `?` one character).
 - `services/*/lib/*` (contains `/`) matches the full path.
 - `/test/i` is a regex tested against the full path.
-- `!Metadata` excludes files that belong to the tab labelled Metadata; `!*.md` excludes
+- `!Manifest` excludes files that belong to the tab labelled Manifest; `!*.md` excludes
   files matching a pattern. A tab with only `!` lines starts from every file.
 
 ## Experiments

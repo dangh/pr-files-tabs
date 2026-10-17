@@ -4,7 +4,7 @@ var GHPT = (function () {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
     tabs: [
-      { label: 'Source', patterns: ['!Metadata', '!Tests', '!Docs', '!Infra', '!Artifacts'] },
+      { label: 'Source', patterns: ['!Manifest', '!Tests', '!Docs', '!Infra', '!Artifacts'] },
       {
         label: 'Tests',
         patterns: [
@@ -17,16 +17,16 @@ var GHPT = (function () {
           '!jest.config.*', '!jest.setup.*', '!vitest.config.*', '!vitest.workspace.*',
           '!playwright.config.*', '!cypress.config.*', '!karma.conf.*', '!.mocharc*',
           '!pytest.ini', '!tox.ini', '!.nycrc*', '!setupTests.*', '!tsconfig*.json',
-          '!Metadata'
+          '!Manifest'
         ]
       },
       {
         label: 'Docs',
         patterns: [
           // Markdown and other doc markup, except inside test folders (e.g. snapshot fixtures).
-          // Readmes and changelogs belong to Metadata.
+          // Readmes and changelogs belong to Manifest.
           '/^(?!.*(^|\\/)(__tests__|__snapshots__|tests?|fixtures?|testdata)\\/).*\\.(md|markdown|rst|adoc)$/i',
-          '!Metadata'
+          '!Manifest'
         ]
       },
       {
@@ -45,7 +45,7 @@ var GHPT = (function () {
         ]
       },
       {
-        label: 'Metadata',
+        label: 'Manifest',
         patterns: [
           'package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml',
           'requirements.txt', 'Pipfile', 'Pipfile.lock', 'pyproject.toml', 'poetry.lock',
@@ -85,8 +85,8 @@ var GHPT = (function () {
   // Pattern syntax: "/regex/flags" tests the full path. Otherwise a glob where * is any
   // characters (including "/") and ? is one character. A glob without "/" tests the file
   // name only, a glob with "/" tests the full path. Globs are case-insensitive.
-  // A leading "!" excludes: "!Metadata" removes files that belong to the tab labelled
-  // Metadata, and "!*.md" or "!/docs/i" removes files matching that pattern. A tab holds a
+  // A leading "!" excludes: "!Manifest" removes files that belong to the tab labelled
+  // Manifest, and "!*.md" or "!/docs/i" removes files matching that pattern. A tab holds a
   // file when any plain pattern matches (or it has none) and no "!" pattern matches.
   function compile(pattern) {
     let text = pattern.trim();

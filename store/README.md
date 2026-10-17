@@ -23,7 +23,7 @@ Screenshots use a public PR (react/react#37778), with the signed-in account's av
 **Name:** PR Files Tabs
 
 **Summary** (132 characters max):
-Split GitHub pull request files into tabs like Source, Tests and Metadata, and load the tab you're on first.
+Split GitHub pull request files into tabs like Source, Tests and Manifest, and load the tab you're on first.
 
 **Category:** Developer Tools. **Language:** English.
 
@@ -32,11 +32,11 @@ Split GitHub pull request files into tabs like Source, Tests and Metadata, and l
 > Big pull requests mix source changes with tests, lock files and generated files.
 > PR Files Tabs adds tabs to GitHub's Files changed page so you can review one kind at a time.
 >
-> - Tabs for Source, Tests, Docs, Infra (serverless, CDK, Terraform, Docker, CI), Metadata
+> - Tabs for Source, Tests, Docs, Infra (serverless, CDK, Terraform, Docker, CI), Manifest
 >   (dependencies, readmes, changelogs) and Artifacts (build output, minified and generated code)
 >   out of the box, with file counts.
 > - Make your own tabs with simple patterns: globs like `package*.json`, folders like
->   `services/*/lib/*`, regexes like `/test/i`, and exclusions like `!Metadata`.
+>   `services/*/lib/*`, regexes like `/test/i`, and exclusions like `!Manifest`.
 > - Pick the tab a PR opens on; the tab you choose on a PR is remembered across refreshes.
 > - The file tree follows the tab you're on.
 > - Works on both the new and the classic Files changed page.
