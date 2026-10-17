@@ -4,8 +4,17 @@ var GHPT = (function () {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
     tabs: [
-      { label: 'Source', patterns: ['!Metadata', '!Tests', '!Infra', '!Artifacts'] },
+      { label: 'Source', patterns: ['!Metadata', '!Tests', '!Docs', '!Infra', '!Artifacts'] },
       { label: 'Tests', patterns: ['/test/i'] },
+      {
+        label: 'Docs',
+        patterns: [
+          // Markdown and other doc markup, except inside test folders (e.g. snapshot fixtures).
+          // Readmes and changelogs belong to Metadata.
+          '/^(?!.*(^|\\/)(__tests__|__snapshots__|tests?|fixtures?|testdata)\\/).*\\.(md|markdown|rst|adoc)$/i',
+          '!Metadata'
+        ]
+      },
       {
         label: 'Infra',
         patterns: [
