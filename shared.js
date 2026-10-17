@@ -5,7 +5,21 @@ var GHPT = (function () {
     defaultTab: '',
     tabs: [
       { label: 'Source', patterns: ['!Metadata', '!Tests', '!Docs', '!Infra', '!Artifacts'] },
-      { label: 'Tests', patterns: ['/test/i'] },
+      {
+        label: 'Tests',
+        patterns: [
+          // Test folders anywhere in the path.
+          '/(^|\\/)(__tests__|__snapshots__|__mocks__|tests?|specs?|e2e|testdata|testing)\\//i',
+          // Test files by name.
+          '*.test.*', '*.spec.*', '*_test.go', '*_test.py', 'test_*.py', 'conftest.py',
+          '*Test.java', '*Tests.java', '*Test.kt', '*Tests.cs', '*_spec.rb', '*.snap',
+          // Test config and setup aren't tests.
+          '!jest.config.*', '!jest.setup.*', '!vitest.config.*', '!vitest.workspace.*',
+          '!playwright.config.*', '!cypress.config.*', '!karma.conf.*', '!.mocharc*',
+          '!pytest.ini', '!tox.ini', '!.nycrc*', '!setupTests.*', '!tsconfig*.json',
+          '!Metadata'
+        ]
+      },
       {
         label: 'Docs',
         patterns: [
