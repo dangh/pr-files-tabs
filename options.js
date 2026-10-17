@@ -1,53 +1,47 @@
 let tabsEl = document.getElementById('tabs');
-let template = document.getElementById('tab-template');
 let defaultEl = document.getElementById('default');
 let statusEl = document.getElementById('status');
 let hideEmptyEl = document.getElementById('hide-empty');
 let onDemandEl = document.getElementById('on-demand');
 let backgroundEl = document.getElementById('background');
 let parallelEl = document.getElementById('parallel');
-let probeEl = document.getElementById('probe');
-let resultEl = document.getElementById('result');
-const PROBE_HINT = resultEl.textContent;
-
-// Comments are fine; a pattern that matches nothing (e.g. a bare "!" or "/") is not.
-function invalidPattern(text) {
-  return text.split('\n').map((p) => p.trim()).find((p) => p && !p.startsWith('#') && !SIFT.compile(p.replace(/^!/, '')));
-}
-
-// Flags a bad pattern under its own tab as you type.
-function check(box) {
-  let area = box.querySelector('.patterns');
-  let bad = invalidPattern(area.value);
-  area.setAttribute('aria-invalid', String(Boolean(bad)));
-  let error = box.querySelector('.error');
-  error.hidden = !bad;
-  error.textContent = bad ? 'Invalid pattern: ' + bad : '';
-  return bad;
-}
-
-function refreshButtons() {
-  let boxes = [...tabsEl.children];
-  boxes.forEach((box, i) => {
-    box.querySelector('[data-action="up"]').disabled = i === 0;
-    box.querySelector('[data-action="down"]').disabled = i === boxes.length - 1;
-  });
-}
 
 function addTab(tab) {
-  let box = template.content.firstElementChild.cloneNode(true);
-  box.querySelector('.label').value = tab.label;
-  box.querySelector('.patterns').value = tab.patterns.join('\n');
+  let box = document.createElement('div');
+  box.className = 'tab';
+
+  let row = document.createElement('div');
+  row.className = 'row';
+  let label = document.createElement('input');
+  label.placeholder = 'Tab label';
+  label.value = tab.label;
+  label.className = 'label';
+  row.append(label);
+  for (let [text, action] of [['Up', 'up'], ['Down', 'down'], ['Delete', 'delete']]) {
+    let btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = text;
+    btn.dataset.action = action;
+    row.append(btn);
+  }
+
+  let area = document.createElement('textarea');
+  area.className = 'patterns';
+  area.value = tab.patterns.join('\n');
+  area.spellcheck = false;
+
+  box.append(row, area);
   tabsEl.append(box);
-  check(box);
-  refreshButtons();
-  return box;
 }
 
 function refreshDefaults(selected) {
-  let current = selected === undefined ? defaultEl.value : selected;
+  let current = selected;
+  if (current === undefined) {
+    current = defaultEl.value;
+  }
   defaultEl.textContent = '';
-  defaultEl.append(new Option('All', ''));
+  let all = new Option('All', '');
+  defaultEl.append(all);
   for (let box of tabsEl.children) {
     let label = box.querySelector('.label').value.trim();
     if (label) {
@@ -55,10 +49,6 @@ function refreshDefaults(selected) {
     }
   }
   defaultEl.value = current;
-  // A default tab that was renamed or deleted falls back to All.
-  if (defaultEl.value !== current) {
-    defaultEl.value = '';
-  }
 }
 
 function show(config) {
@@ -86,25 +76,22 @@ function read() {
   return { tabs, defaultTab: defaultEl.value, hideEmptyTabs: hideEmptyEl.checked, experiments };
 }
 
-let statusTimer = null;
-
-function flash(text, negative) {
+function flash(text) {
   statusEl.textContent = text;
-  statusEl.className = negative ? 'bad' : 'ok';
-  clearTimeout(statusTimer);
-  statusTimer = setTimeout(() => { statusEl.textContent = ''; }, 2500);
+  setTimeout(() => { statusEl.textContent = ''; }, 2500);
 }
 
 function probe() {
-  let path = probeEl.value.trim();
+  let path = document.getElementById('probe').value.trim();
+  let result = document.getElementById('result');
   if (!path) {
-    resultEl.textContent = PROBE_HINT;
+    result.textContent = '';
     return;
   }
   let config = read();
   let held = SIFT.classify(SIFT.compileConfig(config), path);
   let labels = [...held].map((i) => config.tabs[i].label);
-  resultEl.textContent = '→ ' + (labels.join(', ') || 'No tab (only shown under All)');
+  result.textContent = '→ ' + (labels.join(', ') || 'no tab (only shown under All)');
 }
 
 tabsEl.addEventListener('click', function (event) {
@@ -122,39 +109,43 @@ tabsEl.addEventListener('click', function (event) {
   if (btn.dataset.action === 'down' && box.nextElementSibling) {
     box.nextElementSibling.after(box);
   }
-  refreshButtons();
   refreshDefaults();
   probe();
 });
 
-tabsEl.addEventListener('input', function (event) {
-  if (event.target.matches('.patterns')) {
-    check(event.target.closest('.tab'));
-  }
+tabsEl.addEventListener('input', function () {
   refreshDefaults();
   probe();
 });
-probeEl.addEventListener('input', probe);
+document.getElementById('probe').addEventListener('input', probe);
 
 document.getElementById('add').addEventListener('click', function () {
-  addTab({ label: '', patterns: [] }).querySelector('.label').focus();
+  addTab({ label: '', patterns: [] });
 });
 
 document.getElementById('save').addEventListener('click', async function () {
-  let bad = [...tabsEl.children].map(check).find(Boolean);
-  if (bad) {
-    flash('Invalid pattern: ' + bad, true);
+  let config = read();
+  let invalid = [];
+  for (let tab of config.tabs) {
+    for (let pattern of tab.patterns) {
+      // Comments are fine; a pattern that matches nothing (e.g. a bare "!" or "/") is not.
+      if (!pattern.startsWith('#') && !SIFT.compile(pattern.replace(/^!/, ''))) {
+        invalid.push(pattern);
+      }
+    }
+  }
+  if (invalid.length > 0) {
+    flash('Invalid pattern: ' + invalid[0]);
     return;
   }
-  await chrome.storage.sync.set({ config: read() });
+  await chrome.storage.sync.set({ config });
   flash('Saved');
 });
 
 document.getElementById('reset').addEventListener('click', async function () {
   await chrome.storage.sync.remove('config');
   show(SIFT.DEFAULTS);
-  probe();
-  flash('Reset to defaults');
+  flash('Reset');
 });
 
 SIFT.load().then(show);
