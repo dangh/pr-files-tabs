@@ -41,7 +41,7 @@ var SIFT = (function () {
           'deploy/', 'deployment/', 'deployments/', 'k8s/', 'kubernetes/', 'helm/', 'charts/', '.circleci/',
           '/.github/workflows/', '/.github/actions/',
           '# Serverless, CDK, SAM, Pulumi, Terraform.',
-          'serverless.yml', 'serverless.yaml', 'serverless.ts', 'serverless.js', 'serverless.json', 'serverless.*.yml',
+          'serverless*.yml', 'serverless*.yaml', 'serverless.ts', 'serverless.js', 'serverless.json',
           'cdk.json', 'cdk.context.json', '*-stack.ts', '*-stack.js', '*.stack.ts',
           'template.yaml', 'template.yml', 'samconfig.toml',
           'Pulumi.yaml', 'Pulumi.*.yaml', '*.tf', '*.tfvars', '*.hcl',
