@@ -9,7 +9,7 @@ Everything needed to list and publish Sift for GitHub. Images are regenerated wi
 |---|---|---|
 | `../icons/icon-128.png` | Store icon | 128x128 (96x96 artwork, 16 px padding) |
 | `screenshots/1-tests-tab.png` | Screenshot | 1280x800 |
-| `screenshots/2-metadata-tab.png` | Screenshot | 1280x800 |
+| `screenshots/2-manifest-tab.png` | Screenshot | 1280x800 |
 | `screenshots/3-classic-page.png` | Screenshot | 1280x800 |
 | `screenshots/4-options.png` | Screenshot | 1280x800 |
 | `promo/small-tile.png` | Small promo tile | 440x280 |

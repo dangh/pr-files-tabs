@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sift for GitHub",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "short_name": "Sift",
   "description": "Review GitHub pull requests one kind of file at a time: tabs for Source, Tests, Docs, Infra and more. Big PRs load in seconds.",
   "icons": {
