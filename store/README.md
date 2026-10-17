@@ -58,6 +58,8 @@ configurable tabs, and load only the diffs needed for the open tab.
 
 **Permission justifications:**
 - `storage`: saves the user's tab configuration and settings.
+- `offscreen`: a hidden page reads whether Chrome is in light or dark mode
+  (`prefers-color-scheme`, which the service worker can't read), so the toolbar icon matches.
 - Host access (content scripts on `https://github.com/*/*/pull/*`): adds the tabs to the pull
   request page and changes which diffs GitHub loads there. It runs on no other site.
 

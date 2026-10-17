@@ -23,6 +23,9 @@ node -e '
   const files = [
     ...Object.values(m.icons || {}),
     m.options_ui?.page,
+    m.background?.service_worker,
+    ...Object.values(m.action?.default_icon || {}),
+    "offscreen.html",
     "build/options.js",
     "build/options.css",
     ...m.content_scripts.flatMap((c) => [...(c.js || []), ...(c.css || [])])

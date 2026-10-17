@@ -25,6 +25,11 @@ render "$tmp/icon-full.svg" 48 icons/icon-48.png
 render "$PWD/icons/icon.svg" 128 icons/icon-128.png
 printf '<body style="margin:0"><img src="%s/icons/icon-16.svg" width="16" height="16" style="display:block">' "$PWD" > "$tmp/16.html"
 shot "file://$tmp/16.html" 16 16 icons/icon-16.png
+# Light versions of the toolbar sizes, swapped in by background.js when Chrome is in light mode.
+sed 's/viewBox="0 0 128 128"/viewBox="16 16 96 96"/' icons/icon-light.svg > "$tmp/icon-light-full.svg"
+render "$tmp/icon-light-full.svg" 32 icons/icon-light-32.png
+printf '<body style="margin:0"><img src="%s/icons/icon-16-light.svg" width="16" height="16" style="display:block">' "$PWD" > "$tmp/16.html"
+shot "file://$tmp/16.html" 16 16 icons/icon-light-16.png
 shot "file://$PWD/store/promo/tile.html#small" 440 280 store/promo/small-tile.png
 shot "file://$PWD/store/promo/tile.html" 1400 560 store/promo/marquee.png
 # GitHub repository social preview (Settings > Social preview), 1280x640.

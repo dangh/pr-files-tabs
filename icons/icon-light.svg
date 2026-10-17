@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- icon.svg in GitHub's light colors, for the toolbar when Chrome is in light mode. -->
+  <rect x="17" y="17" width="94" height="94" rx="21" fill="#f6f8fa" stroke="#d0d7de" stroke-width="2"/>
+  <path d="M42 34v14m-7-7h14" fill="none" stroke="#1a7f37" stroke-width="6" stroke-linecap="round"/>
+  <path d="M78 41h14" fill="none" stroke="#cf222e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M34 56h60L73 78v14l-18 8V78Z" fill="none" stroke="#1f2328" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M55 78h18v14l-18 8Z" fill="#0969da"/>
+</svg>
