@@ -2,7 +2,7 @@
 var SIFT = (function () {
   const DEFAULTS = {
     // Label of the tab that opens first on a PR; empty means All.
-    defaultTab: '',
+    defaultTab: 'Source',
     // Leave tabs with no files out of the tab bar (All and the open tab always show).
     hideEmptyTabs: true,
     // Patterns use gitignore syntax (see compile). "#" lines are comments shown on the options page.
