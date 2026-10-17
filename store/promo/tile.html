@@ -8,16 +8,16 @@
   body {
     display: flex; align-items: center; justify-content: center; gap: 6vh;
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: linear-gradient(135deg, #0a3069 0%, #0969da 100%); color: #fff;
+    background: linear-gradient(135deg, #0d1117 0%, #24292f 100%); color: #fff;
     padding: 0 9vw; box-sizing: border-box;
   }
-  img { height: 46vh; }
+  img { height: 50vh; }
   h1 { margin: 0 0 2.5vh; font-size: 11vh; letter-spacing: -0.02em; }
-  p { margin: 0 0 4vh; font-size: 5.6vh; color: #cfe3ff; line-height: 1.35; max-width: 60vw; }
+  p { margin: 0 0 4vh; font-size: 5.6vh; color: #9198a1; line-height: 1.35; max-width: 60vw; }
   .tabs { display: inline-flex; gap: 1vh; padding: 0.8vh; border-radius: 1.6vh; background: rgba(255,255,255,0.14); }
   .tabs span { padding: 1vh 2.2vh; border-radius: 1.2vh; font-size: 4.6vh; color: #e6f0ff; }
   .tabs span b { font-weight: 400; opacity: 0.75; margin-left: 1vh; }
-  .tabs .on { background: #fff; color: #0a3069; font-weight: 600; }
+  .tabs .on { background: #fff; color: #1f2328; font-weight: 600; }
   body.small { flex-direction: column; gap: 3vh; text-align: center; padding: 0; }
   body.small img { height: 34vh; }
   body.small h1 { font-size: 13vh; margin-bottom: 4vh; }
@@ -29,7 +29,7 @@
   <img src="../../icons/icon.svg" alt="">
   <div>
     <h1>PR Files Tabs</h1>
-    <p>Review big GitHub pull requests one kind of file at a time, and load only the diffs you look at.</p>
+    <p>Review big GitHub pull requests one kind of file at a time, with the tab you are on loaded first.</p>
     <div class="tabs"><span>All<b>167</b></span><span>Source<b>96</b></span><span class="on">Tests<b>68</b></span><span>Metadata<b>3</b></span></div>
   </div>
   <script>if (location.hash === '#small') document.body.classList.add('small');</script>

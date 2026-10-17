@@ -1,16 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Artwork stays inside 16..112 so the 128 px store icon gets its 16 px padding. -->
-  <!-- Inactive tabs -->
-  <path d="M50 42V27a6 6 0 0 1 6-6h18a6 6 0 0 1 6 6v15z" fill="#d0d7de"/>
-  <path d="M82 42V27a6 6 0 0 1 6-6h18a6 6 0 0 1 6 6v15z" fill="#d0d7de"/>
-  <!-- Panel with the active tab joined to it -->
-  <path d="M16 106V27a6 6 0 0 1 6-6h18a6 6 0 0 1 6 6v9h56a10 10 0 0 1 10 10v60a6 6 0 0 1-6 6H22a6 6 0 0 1-6-6z" fill="#0969da"/>
-  <rect x="24" y="44" width="80" height="60" rx="5" fill="#ffffff"/>
-  <!-- Diff lines -->
-  <rect x="32" y="53" width="10" height="10" rx="2" fill="#1a7f37"/>
-  <rect x="47" y="55" width="46" height="6" rx="3" fill="#4ac26b"/>
-  <rect x="32" y="69" width="10" height="10" rx="2" fill="#cf222e"/>
-  <rect x="47" y="71" width="32" height="6" rx="3" fill="#ff8182"/>
-  <rect x="32" y="85" width="10" height="10" rx="2" fill="#1a7f37"/>
-  <rect x="47" y="87" width="40" height="6" rx="3" fill="#4ac26b"/>
+  <!-- GitHub dark header canvas, Octicon-style pull request glyph, a row of tabs. Artwork stays inside 16..112 for the store icon padding. -->
+  <rect x="16" y="16" width="96" height="96" rx="22" fill="#24292f"/>
+  <rect x="30" y="26" width="20" height="8" rx="4" fill="#4493f8"/>
+  <rect x="54" y="26" width="20" height="8" rx="4" fill="#57606a"/>
+  <rect x="78" y="26" width="20" height="8" rx="4" fill="#57606a"/>
+  <g fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="44" cy="52" r="7"/>
+    <path d="M44 59v22"/>
+    <circle cx="44" cy="88" r="7"/>
+    <circle cx="84" cy="88" r="7"/>
+    <path d="M84 81V66a10 10 0 0 0-10-10h-9"/>
+    <path d="M71 48l-7 8 7 8"/>
+  </g>
 </svg>
