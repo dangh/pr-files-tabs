@@ -41,7 +41,11 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+        # A re-run (e.g. after fixing the store upload) replaces the zip on the existing release.
+        run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            && gh release upload "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --clobber \
+            || gh release create "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -53,20 +57,21 @@ jobs:
       CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
       CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
       REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+      PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: extension
           path: dist
       - name: Skip without store credentials
-        if: env.EXTENSION_ID == '' || env.CLIENT_ID == '' || env.CLIENT_SECRET == '' || env.REFRESH_TOKEN == ''
+        if: env.EXTENSION_ID == '' || env.CLIENT_ID == '' || env.CLIENT_SECRET == '' || env.REFRESH_TOKEN == '' || env.PUBLISHER_ID == ''
         run: echo "::notice::Chrome Web Store secrets not set; skipping store upload."
       - uses: actions/setup-node@v4
-        if: env.EXTENSION_ID != '' && env.CLIENT_ID != '' && env.CLIENT_SECRET != '' && env.REFRESH_TOKEN != ''
+        if: env.EXTENSION_ID != '' && env.CLIENT_ID != '' && env.CLIENT_SECRET != '' && env.REFRESH_TOKEN != '' && env.PUBLISHER_ID != ''
         with:
           node-version: 22
       - name: Upload and publish to the Chrome Web Store
-        if: env.EXTENSION_ID != '' && env.CLIENT_ID != '' && env.CLIENT_SECRET != '' && env.REFRESH_TOKEN != ''
+        if: env.EXTENSION_ID != '' && env.CLIENT_ID != '' && env.CLIENT_SECRET != '' && env.REFRESH_TOKEN != '' && env.PUBLISHER_ID != ''
         # With no command it uploads, then publishes. Reads EXTENSION_ID, CLIENT_ID,
-        # CLIENT_SECRET and REFRESH_TOKEN from the environment.
+        # CLIENT_SECRET, REFRESH_TOKEN and PUBLISHER_ID from the environment.
         run: npx --yes chrome-webstore-upload-cli@4 --source dist/*.zip

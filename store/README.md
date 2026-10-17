@@ -88,6 +88,7 @@ CI uploads and publishes every `v*` tag. All four repository secrets are set
 | `CWS_CLIENT_ID` | OAuth client "sift-ci-publish" (Desktop app) in Google Cloud project `sift-for-github-publish`, Chrome Web Store API enabled, consent screen in production |
 | `CWS_CLIENT_SECRET` | The same OAuth client |
 | `CWS_REFRESH_TOKEN` | Generated for that client; see the [chrome-webstore-upload keys guide](https://github.com/fregante/chrome-webstore-upload-keys) |
+| `CWS_PUBLISHER_ID` | The developer account's publisher ID: the ID after `/devconsole/` in the dashboard URL |
 
 Without them the publish job is skipped with a notice, and the release still gets the zip.
 Treat these as credentials: anyone holding them can publish a new version of the extension.
