@@ -1,9 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Sift: green additions and red deletions fall into a funnel; the blue outlet is what's left
-       to review. GitHub dark canvas and border. Artwork stays inside 16..112 for store padding. -->
-  <rect x="17" y="17" width="94" height="94" rx="21" fill="#24292f" stroke="#30363d" stroke-width="2"/>
-  <path d="M42 34v14m-7-7h14" fill="none" stroke="#3fb950" stroke-width="6" stroke-linecap="round"/>
-  <path d="M78 41h14" fill="none" stroke="#f85149" stroke-width="6" stroke-linecap="round"/>
-  <path d="M34 56h60L73 78v14l-18 8V78Z" fill="none" stroke="#e6edf3" stroke-width="7" stroke-linejoin="round"/>
-  <path d="M55 78h18v14l-18 8Z" fill="#4493f8"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#eaeef2"/>
+  <rect x="0.5" y="0.5" width="127" height="127" rx="15.5" fill="none" stroke="#d0d7de"/>
+  <rect x="19" y="13" width="26" height="11" rx="5.5" fill="#0969da"/>
+  <rect x="51" y="13" width="26" height="11" rx="5.5" fill="#afb8c1"/>
+  <rect x="83" y="13" width="26" height="11" rx="5.5" fill="#afb8c1"/>
+  <g fill="none" stroke="#1f2328" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="37" cy="48" r="9"/>
+    <path d="M37 57v30"/>
+    <circle cx="37" cy="96" r="9"/>
+    <circle cx="91" cy="96" r="9"/>
+    <path d="M91 87V67a13 13 0 0 0-13-13H65"/>
+    <path d="M73 43l-9 11 9 11"/>
+  </g>
 </svg>
