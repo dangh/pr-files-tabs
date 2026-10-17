@@ -88,6 +88,7 @@ var GHPT = (function () {
   // A leading "!" excludes: "!Manifest" removes files that belong to the tab labelled
   // Manifest, and "!*.md" or "!/docs/i" removes files matching that pattern. A tab holds a
   // file when any plain pattern matches (or it has none) and no "!" pattern matches.
+  // Two tabs may exclude each other; a file matching both goes to the tab listed first.
   function compile(pattern) {
     let text = pattern.trim();
     let regexForm = text.match(/^\/(.+)\/([a-z]*)$/);
@@ -140,29 +141,40 @@ var GHPT = (function () {
   }
 
   // Returns the set of tab indexes that hold the path.
+  // Tabs may exclude each other ("!Infra" in Tests and "!Tests" in Infra): a file matching
+  // both then goes to the tab listed first.
   function classify(compiled, path) {
     let cache = new Map();
+    // Includes and pattern excludes only, ignoring tab exclusions.
+    function matches(index) {
+      let tab = compiled[index];
+      let result = tab.include.length === 0 || tab.include.some((m) => m.test(path));
+      return result && !tab.exclude.some((rule) => rule.matcher && rule.matcher.test(path));
+    }
     function holds(index, visiting) {
       if (cache.has(index)) {
         return cache.get(index);
       }
-      if (visiting.has(index)) {
-        return false;
-      }
       visiting.add(index);
-      let tab = compiled[index];
-      let result = tab.include.length === 0 || tab.include.some((m) => m.test(path));
-      for (let rule of tab.exclude) {
-        if (result && rule.matcher && rule.matcher.test(path)) {
-          result = false;
+      let result = matches(index);
+      for (let rule of tab(index)) {
+        if (!result) {
+          break;
         }
-        if (result && rule.tab !== undefined && holds(rule.tab, visiting)) {
+        if (visiting.has(rule.tab)) {
+          // The excluded tab is waiting on this one, i.e. they exclude each other: the tab
+          // listed first keeps the file.
+          result = !(rule.tab < index && matches(rule.tab));
+        } else if (holds(rule.tab, visiting)) {
           result = false;
         }
       }
       visiting.delete(index);
       cache.set(index, result);
       return result;
+    }
+    function tab(index) {
+      return compiled[index].exclude.filter((rule) => rule.tab !== undefined);
     }
     let found = new Set();
     for (let index of compiled.keys()) {

@@ -27,6 +27,8 @@ One pattern per line; a tab shows a file when any pattern matches.
 - `/test/i` is a regex tested against the full path.
 - `!Manifest` excludes files that belong to the tab labelled Manifest; `!*.md` excludes
   files matching a pattern. A tab with only `!` lines starts from every file.
+- Tabs can exclude each other (`!Infra` in Tests and `!Tests` in Infra): a file that matches
+  both goes to the tab listed first, so reorder the tabs to choose.
 
 ## Experiments
 
