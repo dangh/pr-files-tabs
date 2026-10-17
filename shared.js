@@ -12,7 +12,8 @@ var SIFT = (function () {
         label: 'Tests',
         patterns: [
           '# Test folders, anywhere.',
-          '__tests__/', '__snapshots__/', '__mocks__/', 'test/', 'tests/', 'spec/', 'specs/', 'e2e/', 'testdata/', 'testing/',
+          '__tests__/', '__snapshots__/', '__mocks__/', '__fixtures__/', 'test/', 'tests/', '.test/', '.tests/',
+          'spec/', 'specs/', 'e2e/', 'testdata/', 'testing/', 'mocks/', 'fixtures/',
           '# Test files by name.',
           '*.test.*', '*.spec.*', '*_test.go', '*_test.py', 'test_*.py', 'conftest.py',
           '*Test.java', '*Tests.java', '*Test.kt', '*Tests.cs', '*_spec.rb', '*.snap',
@@ -29,7 +30,8 @@ var SIFT = (function () {
           '# Markdown and other doc markup.',
           '*.md', '*.markdown', '*.rst', '*.adoc',
           '# Except inside test folders (snapshot fixtures) and readmes/changelogs (Manifest).',
-          '!__tests__/', '!__snapshots__/', '!test/', '!tests/', '!fixture/', '!fixtures/', '!testdata/',
+          '!__tests__/', '!__snapshots__/', '!__fixtures__/', '!test/', '!tests/', '!.test/', '!.tests/',
+          '!fixture/', '!fixtures/', '!testdata/', '!mocks/',
           '!Manifest'
         ]
       },
