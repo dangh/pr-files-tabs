@@ -38,7 +38,9 @@ var SIFT = (function () {
           '# Infrastructure folders, anywhere.',
           'infra/', 'infrastructure/', 'cdk/', 'serverless/', 'terraform/', 'cloudformation/',
           'deploy/', 'deployment/', 'deployments/', 'k8s/', 'kubernetes/', 'helm/', 'charts/', '.circleci/',
-          '/.github/workflows/', '/.github/actions/',
+          '/.github/workflows/', '/.github/actions/', 'resources/',
+          '# Except Java/Kotlin app resources (src/main/resources), which are app config and assets.',
+          '!**/src/main/resources/',
           '# Serverless, CDK, SAM, Pulumi, Terraform.',
           'serverless*.yml', 'serverless*.yaml', 'serverless.ts', 'serverless.js', 'serverless.json',
           'cdk.json', 'cdk.context.json', '*-stack.ts', '*-stack.js', '*.stack.ts',
@@ -47,7 +49,9 @@ var SIFT = (function () {
           '# Containers and CI.',
           'Dockerfile', 'Dockerfile.*', '*.dockerfile', '.dockerignore',
           'docker-compose*.yml', 'docker-compose*.yaml', 'compose.yml', 'compose.yaml',
-          'Jenkinsfile', '.gitlab-ci.yml', 'buildspec.yml', 'buildspec.yaml', 'Procfile', 'fly.toml'
+          'Jenkinsfile', '.gitlab-ci.yml', 'buildspec.yml', 'buildspec.yaml', 'Procfile', 'fly.toml',
+          '# Tests and readmes in infra folders belong to their own tabs.',
+          '!Tests', '!Manifest'
         ]
       },
       {
