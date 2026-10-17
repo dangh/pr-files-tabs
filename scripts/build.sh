@@ -10,7 +10,9 @@ if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${GITHUB_REF_NAME#v}" != "$version" ]]
   exit 1
 fi
 
-for file in *.js; do
+# The options page is React + Kumo, bundled into build/ (needs `npm ci` first).
+npm run build --silent
+for file in *.js build/*.js; do
   node --check "$file"
 done
 
@@ -21,6 +23,8 @@ node -e '
   const files = [
     ...Object.values(m.icons || {}),
     m.options_ui?.page,
+    "build/options.js",
+    "build/options.css",
     ...m.content_scripts.flatMap((c) => [...(c.js || []), ...(c.css || [])])
   ].filter(Boolean);
   const missing = files.filter((f) => !fs.existsSync(f));
@@ -33,5 +37,5 @@ node -e '
 out="dist/sift-for-github-$version.zip"
 rm -rf dist
 mkdir dist
-zip -q -X "$out" manifest.json ./*.js ./*.css ./*.html icons/*.png
+zip -q -X "$out" manifest.json ./*.js ./*.css ./*.html icons/*.png build/options.js build/options.css
 echo "$out"

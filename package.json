@@ -1,0 +1,20 @@
+{
+  "name": "sift-for-github",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-options.mjs",
+    "watch": "node scripts/build-options.mjs --watch"
+  },
+  "dependencies": {
+    "@cloudflare/kumo": "^2.14.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "esbuild": "^0.28.2",
+    "tailwindcss": "^4.3.3"
+  }
+}

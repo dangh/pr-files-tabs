@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       - run: ./scripts/build.sh
       - uses: actions/upload-artifact@v4
         with:
