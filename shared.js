@@ -77,6 +77,9 @@ var SIFT = (function () {
           '*.min.js', '*.min.css', '*.min.mjs', '*.bundle.js', '*.chunk.js', '*.map',
           '# Compiled binaries and bytecode.',
           '*.pyc', '*.class', '*.jar', '*.war', '*.wasm', '*.o', '*.a', '*.so', '*.dylib', '*.dll', '*.exe',
+          '# Archives and packages (*.gz also covers .tar.gz, and so on).',
+          '*.tar', '*.tgz', '*.gz', '*.bz2', '*.xz', '*.zst', '*.zip', '*.7z', '*.rar',
+          '*.whl', '*.egg', '*.gem', '*.nupkg', '*.vsix', '*.crx', '*.deb', '*.rpm', '*.apk', '*.aab', '*.ipa', '*.dmg', '*.msi',
           '# Generated code (protobuf, Go, Dart, ...).',
           '*.pb.go', '*.pb.gw.go', '*_pb2.py', '*_pb2_grpc.py', '*_pb.js', '*_pb.d.ts', '*_grpc_pb.js',
           'zz_generated*.go', '*_generated.go', '*.generated.*', '*.g.dart', '*.freezed.dart'
