@@ -1,6 +1,6 @@
 # Chrome Web Store
 
-Everything needed to list and publish PR Files Tabs. Images are regenerated with
+Everything needed to list and publish Sift for GitHub. Images are regenerated with
 `store/render.sh` (headless Chrome).
 
 ## Assets
@@ -20,7 +20,7 @@ Screenshots use a public PR (react/react#37778), with the signed-in account's av
 
 ## Listing
 
-**Name:** PR Files Tabs
+**Name:** Sift for GitHub
 
 **Summary** (132 characters max):
 Split GitHub pull request files into tabs like Source, Tests and Manifest, and load the tab you're on first.
@@ -30,7 +30,7 @@ Split GitHub pull request files into tabs like Source, Tests and Manifest, and l
 **Description:**
 
 > Big pull requests mix source changes with tests, lock files and generated files.
-> PR Files Tabs adds tabs to GitHub's Files changed page so you can review one kind at a time.
+> Sift for GitHub adds tabs to GitHub's Files changed page so you can review one kind at a time.
 >
 > - Tabs for Source, Tests, Docs, Infra (serverless, CDK, Terraform, Docker, CI), Manifest
 >   (dependencies, readmes, changelogs) and Artifacts (build output, minified and generated code)

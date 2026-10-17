@@ -5,7 +5,7 @@
 
   function cachedConfig() {
     try {
-      return JSON.parse(localStorage.getItem('ghpt:config'));
+      return JSON.parse(localStorage.getItem('sift:config'));
     } catch (e) {
       return null;
     }
@@ -25,8 +25,8 @@
     if (!config?.tabs || !experiments(config).tabFirst) {
       return false;
     }
-    let pr = GHPT.prKey(pathname);
-    return Boolean(pr) && GHPT.initialKey(config, pr) !== 'all';
+    let pr = SIFT.prKey(pathname);
+    return Boolean(pr) && SIFT.initialKey(config, pr) !== 'all';
   }
 
   // True when only the open tab should load: it opens on a tab and the background load is off.
@@ -113,17 +113,17 @@
   }
 
   function apply() {
-    let key = document.documentElement.dataset.ghptActive;
+    let key = document.documentElement.dataset.siftActive;
     let config = cachedConfig();
     if (!store || !key || !config?.tabs || !experiments(config).tabFirst) {
       return;
     }
     let next = full;
     if (key !== 'all') {
-      let compiled = GHPT.compileConfig(config);
+      let compiled = SIFT.compileConfig(config);
       next = {};
       for (let [path, summary] of Object.entries(full)) {
-        if (GHPT.classify(compiled, path).has(Number(key))) {
+        if (SIFT.classify(compiled, path).has(Number(key))) {
           next[path] = summary;
         }
       }
@@ -277,7 +277,7 @@
     if (tabChanged) {
       apply();
     }
-  }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-ghpt-active'] });
+  }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-sift-active'] });
 
   // GitHub's loader sends one diff request at a time. With parallel loading on, a large one (the
   // batches loadFiles asks for) is split here into small requests that run several at a time,

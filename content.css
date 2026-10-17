@@ -1,8 +1,8 @@
-[data-ghpt-hidden="1"] {
+[data-sift-hidden="1"] {
   display: none !important;
 }
 
-#ghpt-bar {
+#sift-bar {
   display: flex;
   gap: 4px;
   align-items: center;
@@ -10,11 +10,11 @@
   border-bottom: 1px solid var(--borderColor-default, #d0d7de);
 }
 
-#ghpt-bar .ghpt-select {
+#sift-bar .sift-select {
   display: none;
 }
 
-#ghpt-bar button {
+#sift-bar button {
   appearance: none;
   background: none;
   border: 0;
@@ -27,16 +27,16 @@
   color: var(--fgColor-default, #1f2328);
 }
 
-#ghpt-bar button:hover {
+#sift-bar button:hover {
   background: var(--bgColor-neutral-muted, #eaeef2);
 }
 
-#ghpt-bar button[aria-selected="true"] {
+#sift-bar button[aria-selected="true"] {
   font-weight: 600;
   border-bottom-color: var(--borderColor-accent-emphasis, #fd8c73);
 }
 
-#ghpt-bar .ghpt-count {
+#sift-bar .sift-count {
   margin-left: 6px;
   padding: 0 6px;
   border-radius: 10px;
@@ -45,7 +45,7 @@
 }
 
 /* Segmented control inside the sticky toolbar */
-#ghpt-bar.ghpt-inline {
+#sift-bar.sift-inline {
   margin: 0 12px 0 auto;
   gap: 2px;
   padding: 2px;
@@ -56,7 +56,7 @@
   white-space: nowrap;
 }
 
-#ghpt-bar.ghpt-inline button {
+#sift-bar.sift-inline button {
   padding: 2px 8px;
   margin: 0;
   border: 0;
@@ -66,19 +66,19 @@
   color: var(--fgColor-muted, #59636e);
 }
 
-#ghpt-bar.ghpt-inline button:hover {
+#sift-bar.sift-inline button:hover {
   color: var(--fgColor-default, #1f2328);
   background: var(--bgColor-neutral-muted, #eaeef2);
 }
 
-#ghpt-bar.ghpt-inline button[aria-selected="true"] {
+#sift-bar.sift-inline button[aria-selected="true"] {
   font-weight: 600;
   color: var(--fgColor-default, #1f2328);
   background: var(--bgColor-default, #fff);
   box-shadow: 0 0 0 1px var(--borderColor-default, #d0d7de);
 }
 
-#ghpt-bar.ghpt-inline .ghpt-count {
+#sift-bar.sift-inline .sift-count {
   margin-left: 4px;
   padding: 0;
   background: none;
@@ -88,17 +88,17 @@
 }
 
 /* Narrow toolbar: swap the buttons for a dropdown */
-#ghpt-bar.ghpt-inline.ghpt-compact {
+#sift-bar.sift-inline.sift-compact {
   padding: 0;
   border: 0;
   background: none;
 }
 
-#ghpt-bar.ghpt-inline.ghpt-compact button {
+#sift-bar.sift-inline.sift-compact button {
   display: none;
 }
 
-#ghpt-bar.ghpt-inline.ghpt-compact .ghpt-select {
+#sift-bar.sift-inline.sift-compact .sift-select {
   display: block;
   padding: 4px 8px;
   font: inherit;

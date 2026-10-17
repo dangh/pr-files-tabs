@@ -1,6 +1,6 @@
 # Architecture
 
-PR Files Tabs adds tabs to GitHub's pull request **Files changed** page, both the new one
+Sift for GitHub adds tabs to GitHub's pull request **Files changed** page, both the new one
 (`/owner/repo/pull/N/changes`) and the classic one (`/owner/repo/pull/N/files`). Hiding
 files is simple; making GitHub *not load* the hidden files takes several hacks against
 GitHub's front-end internals. This document explains both, and what to check when GitHub
@@ -12,7 +12,7 @@ changes.
 |---|---|---|---|
 | `shared.js` | all | - | Config defaults, pattern matching, `prKey`, `initialKey` (which tab a PR opens on) |
 | `content.js` | isolated | `document_idle` | Tab bar, counts, hiding files with CSS, publishing state for the page scripts |
-| `content.css` | isolated | - | Tab bar styles, `[data-ghpt-hidden]` |
+| `content.css` | isolated | - | Tab bar styles, `[data-sift-hidden]` |
 | `page.js` | MAIN | `document_start` | Load the open tab first / the rest in the background: GitHub's file list and loader; the virtualized list when only the tab loads |
 | `prefetch.js` | MAIN | `document_start` | Parallel diff loading when GitHub drives loading |
 | `options.*` | extension page | - | Settings |
@@ -24,13 +24,13 @@ GitHub's page data and reach its React state. Isolated scripts can't, but they c
 ### How the worlds talk
 
 - **Config:** MAIN scripts can't read `chrome.storage`, and they need the config before it
-  could answer anyway. `content.js` copies the config to `localStorage['ghpt:config']` on
+  could answer anyway. `content.js` copies the config to `localStorage['sift:config']` on
   load and on every change; `page.js` and `prefetch.js` read it synchronously. On the very
   first visit there is no copy yet, so that load behaves like GitHub's default.
-- **Open tab:** `content.js` writes the active tab key to `<html data-ghpt-active="...">`
+- **Open tab:** `content.js` writes the active tab key to `<html data-sift-active="...">`
   (`all`, or the tab's index). `page.js` watches that attribute.
-- **Saved choice:** the tab picked on a PR is in `sessionStorage['ghpt:owner/repo#N']`,
-  which both worlds can read. `GHPT.initialKey()` combines it with `defaultTab`.
+- **Saved choice:** the tab picked on a PR is in `sessionStorage['sift:owner/repo#N']`,
+  which both worlds can read. `SIFT.initialKey()` combines it with `defaultTab`.
 
 `shared.js` is listed in one MAIN entry and one isolated entry. Chrome only injected it into
 one context when two `document_start` entries in different worlds both listed it, so there is
@@ -68,13 +68,13 @@ Found by reading GitHub's bundles (the chunk that defines `startQueue`,
 
 ## Hiding files (content.js)
 
-Each file in the active tab is classified with `GHPT.classify()`. Files outside it are hidden
+Each file in the active tab is classified with `SIFT.classify()`. Files outside it are hidden
 two ways:
 
-1. A `<style id="ghpt-filter">` with `div:has(> #diff-<digest>)` (classic:
+1. A `<style id="sift-filter">` with `div:has(> #diff-<digest>)` (classic:
    `copilot-diff-entry:has(> ...)`) and tree-item rules, built from the embedded file list
    (classic: the file tree), so files are hidden the moment GitHub renders them.
-2. `data-ghpt-hidden` on each rendered diff's outermost wrapper (`slotOf()`).
+2. `data-sift-hidden` on each rendered diff's outermost wrapper (`slotOf()`).
 
 `slotOf()` climbs while the parent has only one child, but stops at a virtualized row
 (`[data-index]`), and every pass clears marks it doesn't set again. Without both rules a
@@ -113,7 +113,7 @@ file in the background; switching tabs then makes no requests.
    skipped by the loader, so asking again is harmless.
 4. **Then the rest** (background experiment): the same, for every file in `entriesMap` (the
    loader's own list, built once from the full file list).
-5. **Switching tabs** changes `data-ghpt-active`; `page.js` swaps in the new tab's files and
+5. **Switching tabs** changes `data-sift-active`; `page.js` swaps in the new tab's files and
    starts a new run, which stops the old one after its current batch. Files already loaded
    aren't requested again; the diff lines are cached with no expiry.
 6. **Keeping the full list honest.** `page.js` subscribes to the store. If GitHub replaces the

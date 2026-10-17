@@ -1,6 +1,6 @@
-# PR Files Tabs privacy policy
+# Sift for GitHub privacy policy
 
-PR Files Tabs does not collect, store on any server, sell or share any personal data.
+Sift for GitHub does not collect, store on any server, sell or share any personal data.
 
 **What it reads.** On GitHub pull request pages (`https://github.com/*/*/pull/*`) it reads the
 list of changed files and the page's own data, in your browser, to sort files into tabs and

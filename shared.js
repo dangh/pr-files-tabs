@@ -1,5 +1,5 @@
 // Loaded by the content script, the page script and the options page.
-var GHPT = (function () {
+var SIFT = (function () {
   const DEFAULTS = {
     // Label of the tab that opens first on a PR; empty means All.
     defaultTab: '',
@@ -255,7 +255,7 @@ var GHPT = (function () {
   // The tab picked on a PR survives a refresh (sessionStorage); a PR opened fresh uses the default.
   function readSaved(pr) {
     try {
-      return sessionStorage.getItem('ghpt:' + pr);
+      return sessionStorage.getItem('sift:' + pr);
     } catch (e) {
       return null;
     }

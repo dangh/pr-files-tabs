@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Checks the extension and packs it into dist/pr-files-tabs-<version>.zip for the Chrome Web
+# Checks the extension and packs it into dist/sift-for-github-<version>.zip for the Chrome Web
 # Store. On a tag build (v1.2.3), the tag must match the manifest version.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -30,7 +30,7 @@ node -e '
   }
 '
 
-out="dist/pr-files-tabs-$version.zip"
+out="dist/sift-for-github-$version.zip"
 rm -rf dist
 mkdir dist
 zip -q -X "$out" manifest.json ./*.js ./*.css ./*.html icons/*.png

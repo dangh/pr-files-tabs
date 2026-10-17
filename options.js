@@ -87,7 +87,7 @@ function probe() {
     return;
   }
   let config = read();
-  let held = GHPT.classify(GHPT.compileConfig(config), path);
+  let held = SIFT.classify(SIFT.compileConfig(config), path);
   let labels = [...held].map((i) => config.tabs[i].label);
   result.textContent = '→ ' + (labels.join(', ') || 'no tab (only shown under All)');
 }
@@ -127,7 +127,7 @@ document.getElementById('save').addEventListener('click', async function () {
   for (let tab of config.tabs) {
     for (let pattern of tab.patterns) {
       // Comments are fine; a pattern that matches nothing (e.g. a bare "!" or "/") is not.
-      if (!pattern.startsWith('#') && !GHPT.compile(pattern.replace(/^!/, ''))) {
+      if (!pattern.startsWith('#') && !SIFT.compile(pattern.replace(/^!/, ''))) {
         invalid.push(pattern);
       }
     }
@@ -142,8 +142,8 @@ document.getElementById('save').addEventListener('click', async function () {
 
 document.getElementById('reset').addEventListener('click', async function () {
   await chrome.storage.sync.remove('config');
-  show(GHPT.DEFAULTS);
+  show(SIFT.DEFAULTS);
   flash('Reset');
 });
 
-GHPT.load().then(show);
+SIFT.load().then(show);

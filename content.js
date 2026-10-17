@@ -1,13 +1,13 @@
 (function () {
-  let config = GHPT.DEFAULTS;
-  let compiled = GHPT.compileConfig(config);
+  let config = SIFT.DEFAULTS;
+  let compiled = SIFT.compileConfig(config);
   let active = 'all';
   let activeFor = null;
   let ready = false;
   let timer = null;
 
   function prKey() {
-    return GHPT.prKey(location.pathname);
+    return SIFT.prKey(location.pathname);
   }
 
   function saveChoice(pr, tabs, key) {
@@ -17,20 +17,20 @@
       value = 'tab:' + tab.label;
     }
     try {
-      sessionStorage.setItem('ghpt:' + pr, value);
+      sessionStorage.setItem('sift:' + pr, value);
     } catch (e) {
       // storage unavailable; the choice just won't persist
     }
   }
 
   function tabList() {
-    return GHPT.tabList(config);
+    return SIFT.tabList(config);
   }
 
   // page.js runs before chrome.storage can answer and can't reach it anyway, so it reads this copy.
   function shareConfig() {
     try {
-      localStorage.setItem('ghpt:config', JSON.stringify(config));
+      localStorage.setItem('sift:config', JSON.stringify(config));
     } catch (e) {
       // storage unavailable; page.js then leaves GitHub's loading alone
     }
@@ -116,9 +116,9 @@
 
   function showTreeItem(item, visible) {
     if (visible) {
-      delete item.dataset.ghptHidden;
+      delete item.dataset.siftHidden;
     } else {
-      item.dataset.ghptHidden = '1';
+      item.dataset.siftHidden = '1';
     }
   }
 
@@ -142,7 +142,7 @@
         let files = [...item.querySelectorAll('li[role="treeitem"]')].filter((i) => !isTreeFolder(i));
         // Collapsed folders on the new page don't render their rows; fall back to paths.
         visible = files.length > 0
-          ? files.some((f) => !f.dataset.ghptHidden)
+          ? files.some((f) => !f.dataset.siftHidden)
           : activePaths.some((p) => p.startsWith(treePathOf(item) + '/'));
       }
       showTreeItem(item, visible);
@@ -218,10 +218,10 @@
       }
     }
     let css = rules.join('\n');
-    let style = document.getElementById('ghpt-filter');
+    let style = document.getElementById('sift-filter');
     if (!style) {
       style = document.createElement('style');
-      style.id = 'ghpt-filter';
+      style.id = 'sift-filter';
       document.head.append(style);
     }
     if (style.textContent !== css) {
@@ -233,11 +233,11 @@
     if (!ready) {
       return;
     }
-    let bar = document.getElementById('ghpt-bar');
+    let bar = document.getElementById('sift-bar');
     if (!onFilesPage()) {
       bar?.remove();
-      document.getElementById('ghpt-filter')?.remove();
-      delete document.documentElement.dataset.ghptActive;
+      document.getElementById('sift-filter')?.remove();
+      delete document.documentElement.dataset.siftActive;
       return;
     }
 
@@ -256,14 +256,14 @@
     let pr = prKey();
     if (activeFor !== pr) {
       activeFor = pr;
-      active = GHPT.initialKey(config, pr);
+      active = SIFT.initialKey(config, pr);
     }
     if (!tabs.some((t) => t.key === active)) {
       active = 'all';
     }
     // page.js watches this to hand GitHub only the open tab's files.
-    if (document.documentElement.dataset.ghptActive !== active) {
-      document.documentElement.dataset.ghptActive = active;
+    if (document.documentElement.dataset.siftActive !== active) {
+      document.documentElement.dataset.siftActive = active;
     }
 
     let files = [];
@@ -284,7 +284,7 @@
     let bucketByPath = new Map();
     let bucketByDiffId = new Map();
     for (let file of files) {
-      let held = GHPT.classify(compiled, file.path);
+      let held = SIFT.classify(compiled, file.path);
       bucketByPath.set(file.path, held);
       bucketByDiffId.set('diff-' + file.digest, held);
       for (let index of held) {
@@ -300,28 +300,28 @@
     }
     // A wrapper that held a single hidden diff can later hold more (GitHub's virtualized list
     // reuses its row container), so drop every mark this pass doesn't set again.
-    for (let el of document.querySelectorAll('[data-ghpt-hidden]:not(li[role="treeitem"])')) {
+    for (let el of document.querySelectorAll('[data-sift-hidden]:not(li[role="treeitem"])')) {
       if (!hide.has(el)) {
-        delete el.dataset.ghptHidden;
+        delete el.dataset.siftHidden;
       }
     }
     for (let slot of hide) {
-      slot.dataset.ghptHidden = '1';
+      slot.dataset.siftHidden = '1';
     }
     if (summary) {
       writeFilterStyle(files, bucketByDiffId);
     } else {
-      document.getElementById('ghpt-filter')?.remove();
+      document.getElementById('sift-filter')?.remove();
     }
 
     filterTree(bucketByPath, bucketByDiffId);
 
     if (!bar) {
       bar = document.createElement('div');
-      bar.id = 'ghpt-bar';
+      bar.id = 'sift-bar';
       bar.setAttribute('role', 'tablist');
       bar.addEventListener('change', function (event) {
-        if (event.target.matches('select.ghpt-select')) {
+        if (event.target.matches('select.sift-select')) {
           active = event.target.value;
           saveChoice(prKey(), tabList(), active);
           render();
@@ -349,14 +349,14 @@
         btn.setAttribute('aria-selected', String(tab.key === active));
         btn.append(tab.label);
         let count = document.createElement('span');
-        count.className = 'ghpt-count';
+        count.className = 'sift-count';
         count.textContent = String(counts[tab.key]);
         btn.append(count);
         bar.append(btn);
       }
       // Shown instead of the buttons when the toolbar is too narrow (see fit()).
       let select = document.createElement('select');
-      select.className = 'ghpt-select';
+      select.className = 'sift-select';
       select.setAttribute('aria-label', 'File filter');
       for (let tab of tabs) {
         select.append(new Option(tab.label + ' (' + counts[tab.key] + ')', tab.key));
@@ -376,8 +376,8 @@
 
   // Collapse the buttons into a dropdown when the toolbar row can't hold them all.
   function fit(bar) {
-    bar.classList.remove('ghpt-compact');
-    if (!bar.classList.contains('ghpt-inline')) {
+    bar.classList.remove('sift-compact');
+    if (!bar.classList.contains('sift-inline')) {
       return;
     }
     let row = classicRow();
@@ -385,7 +385,7 @@
       // The classic row wraps instead of overflowing; compact if the bar wrapped to a new line.
       let first = [...row.children].find((c) => c.offsetWidth > 0);
       if (first && bar.offsetTop > first.offsetTop + first.offsetHeight / 2) {
-        bar.classList.add('ghpt-compact');
+        bar.classList.add('sift-compact');
       }
       return;
     }
@@ -400,7 +400,7 @@
     let right = bar.parentElement;
     let natural = used - right.offsetWidth + right.scrollWidth;
     if (natural + 32 > toolbar.clientWidth) {
-      bar.classList.add('ghpt-compact');
+      bar.classList.add('sift-compact');
     }
   }
 
@@ -410,7 +410,7 @@
   function placeBar(bar, firstDiff) {
     let row = classicRow();
     if (row) {
-      bar.classList.add('ghpt-inline');
+      bar.classList.add('sift-inline');
       // Last item of the row, pushed to the right by the bar's auto margin.
       if (bar.parentElement !== row || row.lastElementChild !== bar) {
         row.append(bar);
@@ -424,14 +424,14 @@
       anchor = anchor.parentElement;
     }
     if (toolbar && anchor) {
-      bar.classList.add('ghpt-inline');
+      bar.classList.add('sift-inline');
       // First child of the right-hand group, i.e. just left of the viewed counter.
       if (bar.parentElement !== anchor || anchor.firstElementChild !== bar) {
         anchor.insertBefore(bar, anchor.firstElementChild);
       }
       return;
     }
-    bar.classList.remove('ghpt-inline');
+    bar.classList.remove('sift-inline');
     // On the classic page the diff sits in a copilot-diff-entry that gets hidden with it.
     let before = firstDiff?.closest('copilot-diff-entry') || firstDiff;
     if (before && bar.nextElementSibling !== before) {
@@ -450,16 +450,16 @@
 
   chrome.storage.onChanged.addListener(async function (changes) {
     if (changes.config) {
-      config = await GHPT.load();
-      compiled = GHPT.compileConfig(config);
+      config = await SIFT.load();
+      compiled = SIFT.compileConfig(config);
       shareConfig();
       render();
     }
   });
 
-  GHPT.load().then(function (loaded) {
+  SIFT.load().then(function (loaded) {
     config = loaded;
-    compiled = GHPT.compileConfig(config);
+    compiled = SIFT.compileConfig(config);
     shareConfig();
     ready = true;
     render();

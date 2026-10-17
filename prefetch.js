@@ -18,7 +18,7 @@
   // when that experiment is off.
   function enabled() {
     try {
-      let experiments = JSON.parse(localStorage.getItem('ghpt:config'))?.experiments;
+      let experiments = JSON.parse(localStorage.getItem('sift:config'))?.experiments;
       return experiments?.parallelLoad !== false && experiments?.onDemandDiffs === false;
     } catch (e) {
       return false;

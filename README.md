@@ -1,6 +1,6 @@
 <p align="center"><img src="icons/icon-128.png" width="96" height="96" alt=""></p>
 
-<h1 align="center">PR Files Tabs</h1>
+<h1 align="center">Sift for GitHub</h1>
 
 <p align="center"><b>Review big GitHub pull requests one kind of file at a time.</b><br>
 Tabs for Source, Tests, Docs, Infra, Manifest and Artifacts on every pull request,<br>
@@ -16,7 +16,7 @@ In a 150-file pull request, the dozen files that need real review hide among loc
 snapshots, generated code, docs and CI config. And GitHub loads diffs one request at a time,
 so on a big PR you wait half a minute or more, or scroll and wait, before you can even look.
 
-PR Files Tabs fixes both, right on GitHub's Files changed page.
+Sift for GitHub fixes both, right on GitHub's Files changed page.
 
 ## What you get
 
@@ -129,7 +129,7 @@ without a reload.
 ## Build and release
 
 - `scripts/build.sh` checks the scripts and the manifest and writes
-  `dist/pr-files-tabs-<version>.zip`. CI runs it on every push and pull request and keeps
+  `dist/sift-for-github-<version>.zip`. CI runs it on every push and pull request and keeps
   the zip as a build artifact.
 - To release, bump `version` in `manifest.json`, commit, then tag and push it:
   `git tag v0.4.0 && git push origin v0.4.0`. CI creates a GitHub release with the zip and,
