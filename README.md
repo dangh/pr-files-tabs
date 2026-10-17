@@ -133,10 +133,8 @@ without a reload.
 
 ## Build and release
 
-- The options page is React with Cloudflare's [Kumo](https://kumo-ui.com) components, source in
-  `options/`, bundled into `build/`. Run `npm ci && npm run build` once before **Load unpacked**
-  from the repo (`npm run watch` rebuilds on change). The content scripts aren't built.
-- `scripts/build.sh` builds the options page, checks the scripts and the manifest and writes
+- Nothing is built: **Load unpacked** works straight from the repo.
+- `scripts/build.sh` checks the scripts and the manifest and writes
   `dist/sift-for-github-<version>.zip`. CI runs it on every push and pull request and keeps
   the zip as a build artifact.
 - To release, bump `version` in `manifest.json`, commit, then tag and push it:

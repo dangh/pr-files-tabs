@@ -1,9 +1,0 @@
-/* Built by scripts/build-options.mjs into build/options.css. */
-@source "../node_modules/@cloudflare/kumo/dist/**/*.{js,jsx,ts,tsx}";
-@source "./";
-@import "@cloudflare/kumo/styles/tailwind";
-@import "tailwindcss";
-
-body {
-  @apply bg-kumo-recessed text-kumo-default antialiased;
-}

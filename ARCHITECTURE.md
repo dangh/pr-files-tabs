@@ -15,7 +15,7 @@ changes.
 | `content.css` | isolated | - | Tab bar styles, `[data-sift-hidden]` |
 | `page.js` | MAIN | `document_start` | Load the open tab first / the rest in the background: GitHub's file list and loader; the virtualized list when only the tab loads |
 | `prefetch.js` | MAIN | `document_start` | Parallel diff loading when GitHub drives loading |
-| `options.html`, `options/` | extension page | - | Settings (React + Kumo, bundled into `build/`) |
+| `options.*` | extension page | - | Settings: native controls styled after Cloudflare's Kumo design system |
 | `background.js` | service worker | - | Toolbar icon for light or dark mode; the icon opens the options page |
 | `offscreen.*` | offscreen page | - | Watches `prefers-color-scheme` for `background.js`, which can't |
 
