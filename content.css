@@ -67,10 +67,12 @@
   background: var(--bgColor-muted, #f6f8fa);
 }
 
+/* Every button has a 1px border, transparent unless selected, so the selected outline sits
+   inside the box: same 2px from the container edge as between tabs, and no size change. */
 #sift-bar.sift-inline button {
-  padding: 2px 8px;
+  padding: 1px 7px;
   margin: 0;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 4px;
   font-size: 12px;
   line-height: 20px;
@@ -86,7 +88,7 @@
   font-weight: 600;
   color: var(--fgColor-default, #1f2328);
   background: var(--bgColor-default, #fff);
-  box-shadow: 0 0 0 1px var(--borderColor-default, #d0d7de);
+  border-color: var(--borderColor-default, #d0d7de);
 }
 
 #sift-bar.sift-inline .sift-count {
