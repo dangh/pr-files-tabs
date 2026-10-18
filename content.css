@@ -60,23 +60,31 @@
 }
 
 #sift-bar.sift-inline .sift-tabs {
-  gap: 2px;
-  padding: 2px;
+  gap: 0;
+  padding: 0;
   border: 1px solid var(--borderColor-default, #d0d7de);
   border-radius: 6px;
   background: var(--bgColor-muted, #f6f8fa);
 }
 
-/* Every button has a 1px border, transparent unless selected, so the selected outline sits
-   inside the box: same 2px from the container edge as between tabs, and no size change. */
+/* Tabs are full height: each button's 1px border (transparent unless selected) is pulled over
+   the strip's border with negative margins, so the selected tab shares it on every side. */
 #sift-bar.sift-inline button {
-  padding: 1px 7px;
-  margin: 0;
+  padding: 3px 7px;
+  margin: -1px 0;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 12px;
   line-height: 20px;
   color: var(--fgColor-muted, #59636e);
+}
+
+#sift-bar.sift-inline button:first-child {
+  margin-left: -1px;
+}
+
+#sift-bar.sift-inline button:last-child {
+  margin-right: -1px;
 }
 
 #sift-bar.sift-inline button:hover {
